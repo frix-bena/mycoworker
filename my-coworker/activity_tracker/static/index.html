@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Activity Tracker</title>
+<meta name="description" content="Developer activity tracking dashboard — Coding, Music, and productivity insights.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- ── SIDEBAR ─────────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="logo">
+    <span class="logo-icon">⚡</span>
+    <div><div class="logo-title">Activity Tracker</div><div class="logo-sub">Developer Dashboard</div></div>
+  </div>
+
+  <div>
+    <div class="nav-label">📅 Time Period</div>
+    <button class="nav-btn active" data-period="today">Today</button>
+    <button class="nav-btn" data-period="7days">Last 7 Days</button>
+    <button class="nav-btn" data-period="30days">Last 30 Days</button>
+    <button class="nav-btn" data-period="custom">Custom Range</button>
+  </div>
+
+  <div class="custom-range" id="customRange">
+    <div class="nav-label">🗓 Custom Range</div>
+    <input type="date" id="startDate" class="date-inp">
+    <input type="date" id="endDate"   class="date-inp">
+    <button class="apply-btn" id="applyBtn">Apply</button>
+  </div>
+
+  <div>
+    <div class="nav-label">Categories</div>
+    <div class="legend-item"><span class="ldot c"></span>Coding</div>
+    <div class="legend-item"><span class="ldot m"></span>Music / Media</div>
+    <div class="legend-item"><span class="ldot o"></span>Other</div>
+  </div>
+
+  <div class="status-box">
+    <div class="nav-label">Status</div>
+    <div class="status-line"><span class="live-dot"></span>Tracking Active</div>
+    <div class="drtxt" id="dateRangeTxt">—</div>
+  </div>
+</aside>
+
+<!-- ── MAIN ────────────────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div>
+      <div class="hero-title">⚡ Activity Tracker</div>
+      <div class="hero-sub" id="heroSub">Loading…</div>
+    </div>
+    <div>
+      <div class="hero-num" id="heroTotal">--</div>
+      <div class="hero-num-label">Total Active · avg <span id="heroAvg">--</span>/day</div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-txt">Loading activity data…</div>
+  </div>
+
+  <!-- Content -->
+  <div id="content" style="display:none">
+
+    <!-- Metrics -->
+    <div class="sec-label">📈 Summary</div>
+    <div class="metrics-grid">
+      <div class="mc c"><span class="m-icon">⌨️</span><div class="m-label">Coding Time</div><div class="m-val" id="mCoding">--</div><div class="m-pct" id="pCoding"></div></div>
+      <div class="mc m"><span class="m-icon">🎵</span><div class="m-label">Music / Media</div><div class="m-val" id="mMusic">--</div><div class="m-pct" id="pMusic"></div></div>
+      <div class="mc o"><span class="m-icon">◈</span><div class="m-label">Other</div><div class="m-val" id="mOther">--</div><div class="m-pct" id="pOther"></div></div>
+      <div class="mc t"><span class="m-icon">⚡</span><div class="m-label">Total Active</div><div class="m-val" id="mTotal">--</div><div class="m-pct" id="pTotal"></div></div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="sec-label">📊 Visualizations</div>
+    <div class="charts-row">
+      <div class="chart-box">
+        <div class="chart-title">Activity Distribution</div>
+        <canvas id="donutChart" height="240"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Activity Timeline</div>
+        <canvas id="timelineChart" height="240"></canvas>
+      </div>
+    </div>
+
+    <!-- Daily breakdown -->
+    <div id="dailySection" style="display:none">
+      <div class="sec-label">📅 Daily Breakdown</div>
+      <div class="chart-box">
+        <div class="chart-title">Daily Activity (hours)</div>
+        <canvas id="dailyChart" height="160"></canvas>
+      </div>
+    </div>
+
+    <!-- Top apps -->
+    <div class="sec-label">🖥️ Top Applications</div>
+    <div class="chart-box" style="padding:0 0 4px">
+      <table class="app-tbl">
+        <thead><tr>
+          <th style="padding-left:20px">Application</th>
+          <th>Category</th>
+          <th>Time</th>
+          <th>Usage</th>
+        </tr></thead>
+        <tbody id="appsBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Weekly stats -->
+    <div id="weeklySec" style="display:none">
+      <div class="sec-label">📊 Weekly Statistics</div>
+      <div class="chart-box" style="padding:0 0 4px">
+        <table class="wk-tbl">
+          <thead><tr>
+            <th style="padding-left:20px">Date</th>
+            <th style="color:#38bdf8">⌨ Coding</th>
+            <th style="color:#a78bfa">♪ Music</th>
+            <th style="color:#34d399">◈ Other</th>
+            <th>Total</th>
+          </tr></thead>
+          <tbody id="weeklyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span>⚡ Activity Tracker v2.0</span>
+      <span id="footerRange">—</span>
+      <span id="footerEvents">—</span>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
