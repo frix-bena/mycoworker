@@ -44,13 +44,16 @@ All data is stored locally on your machine with zero external cloud dependencies
 
 | Feature | Description |
 |---|---|
+| 🤖 **Realistic Machine Activity Tracking** | Automatically monitors the host machine in real-time (Linux/GNOME/Wayland/X11, Windows, macOS) |
+| 🎵 **Active Media & MPRIS Detection** | Detects playing music/media metadata (title, artist, album) from Spotify, YouTube, Brave, etc. |
+| 💤 **Smart Idle & User Activity Detection** | Accurately identifies user idle time using OS-level idle monitors (Mutter / X11 / Win32) |
 | ⏱️ **Live Activity Stopwatch** | Real-time stopwatch with start/pause/save controls and smart auto-categorization |
 | 📝 **Manual Activity Logging** | Easily log past work sessions, window titles, dates, durations, and notes |
 | 📊 **Interactive Analytics** | Real-time Doughnut charts, 24-hour hourly timeline bars, and multi-day trend graphs |
 | 🖥️ **Top Applications Ranking** | View your most-used IDEs, music players, and tools with visual distribution bars |
 | 📅 **Flexible Date Filtering** | Filter dashboard metrics by Today, Yesterday, Last 7 Days, Last 30 Days, or Custom ranges |
 | 🔍 **Search & Category Filters** | Filter activity logs by keyword, category (*Coding*, *Music*, *Work*, *Learning*, *Other*) |
-| 🗄️ **Persistent Local Storage** | Atomic file-based JSON storage that persists across sessions |
+| 🗄️ **Persistent Local Storage** | Atomic file-based JSON & SQLite storage that persists across sessions |
 | 🪄 **Demo Data Generator** | One-click button to seed realistic activity logs across past days for instant preview |
 
 ---
@@ -58,7 +61,7 @@ All data is stored locally on your machine with zero external cloud dependencies
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 18, Vite 6, Tailwind CSS, Lucide Icons, Chart.js, React-Chartjs-2
-- **Backend**: Node.js, Express.js, Morgan logger, CORS
+- **Backend & Tracker**: Node.js, Express.js, Native OS Introspection (D-Bus / MPRIS / Mutter / X11 / Win32), Morgan logger, CORS
 - **Workspace Architecture**: Root npm workspaces linking `client/` and `server/` with `concurrently`
 
 ---
@@ -159,6 +162,9 @@ mycowoker/
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/api/health` | Service health check and activity count |
+| `GET` | `/api/tracker/status` | Current machine activity, active application, media playing, and idle state |
+| `POST` | `/api/tracker/toggle` | Toggle automatic machine activity tracking on/off |
+| `POST` | `/api/tracker/poll-now` | Force an immediate machine activity probe & database sync |
 | `GET` | `/api/activities` | List activities (`?start=YYYY-MM-DD&end=YYYY-MM-DD&category=coding&search=term`) |
 | `GET` | `/api/activities/:id` | Get single activity by ID |
 | `POST` | `/api/activities` | Create a new activity entry |

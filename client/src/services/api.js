@@ -72,3 +72,34 @@ export async function checkHealth() {
   if (!res.ok) throw new Error(`HTTP error ${res.status}`);
   return await res.json();
 }
+
+export async function fetchTrackerStatus() {
+  const res = await fetch(`${API_BASE}/tracker/status`);
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return await res.json();
+}
+
+export async function toggleMachineTracker() {
+  const res = await fetch(`${API_BASE}/tracker/toggle`, { method: 'POST' });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return await res.json();
+}
+
+export async function startMachineTracker() {
+  const res = await fetch(`${API_BASE}/tracker/start`, { method: 'POST' });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return await res.json();
+}
+
+export async function stopMachineTracker() {
+  const res = await fetch(`${API_BASE}/tracker/stop`, { method: 'POST' });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return await res.json();
+}
+
+export async function pollTrackerNow() {
+  const res = await fetch(`${API_BASE}/tracker/poll-now`, { method: 'POST' });
+  if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+  return await res.json();
+}
+

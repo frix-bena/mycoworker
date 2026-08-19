@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 import { db } from './db.js';
 import activitiesRouter from './routes/activities.js';
 import statsRouter from './routes/stats.js';
+import trackerRouter from './routes/tracker.js';
+import { machineTracker } from './machineTracker.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +23,7 @@ app.use(morgan('dev'));
 // API Routes
 app.use('/api/activities', activitiesRouter);
 app.use('/api/stats', statsRouter);
+app.use('/api/tracker', trackerRouter);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -31,6 +34,8 @@ app.get('/api/health', async (req, res) => {
       service: 'Activity Tracker API',
       uptime: process.uptime(),
       activitiesCount: activities.length,
+      isMachineTracking: machineTracker.isTracking,
+      currentActivity: machineTracker.getStatus().currentActivity,
       timestamp: new Date().toISOString()
     });
   } catch (err) {
@@ -55,9 +60,11 @@ app.get('*', (req, res, next) => {
 // Initialize database and start server
 async function startServer() {
   await db.init();
+  machineTracker.start();
   app.listen(PORT, () => {
     console.log(`\n⚡ Activity Tracker Server running at http://localhost:${PORT}`);
-    console.log(`   API endpoints ready at http://localhost:${PORT}/api/activities\n`);
+    console.log(`   API endpoints ready at http://localhost:${PORT}/api/activities`);
+    console.log(`   Machine Tracker live at http://localhost:${PORT}/api/tracker/status\n`);
   });
 }
 

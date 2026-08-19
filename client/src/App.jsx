@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Navbar from './components/Navbar';
 import DateRangeFilter from './components/DateRangeFilter';
 import StatCards from './components/StatCards';
+import LiveMachineTracker from './components/LiveMachineTracker';
 import LiveTimer from './components/LiveTimer';
 import ChartsSection from './components/ChartsSection';
 import TopAppsTable from './components/TopAppsTable';
@@ -14,7 +15,10 @@ import {
   updateActivity, 
   deleteActivity, 
   seedSampleData, 
-  clearAllActivities 
+  clearAllActivities,
+  fetchTrackerStatus,
+  toggleMachineTracker,
+  pollTrackerNow
 } from './services/api';
 
 export default function App() {
@@ -23,6 +27,10 @@ export default function App() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSeeding, setIsSeeding] = useState(false);
+
+  // Machine Tracker state
+  const [trackerStatus, setTrackerStatus] = useState(null);
+  const [isPollingTracker, setIsPollingTracker] = useState(false);
 
   // Filter state
   const [activePeriod, setActivePeriod] = useState('7days');
@@ -114,6 +122,67 @@ export default function App() {
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
+
+  // Machine Tracker Polling (every 3 seconds)
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStatus = async () => {
+      try {
+        const res = await fetchTrackerStatus();
+        if (isMounted && res?.data) {
+          setTrackerStatus(res.data);
+        }
+      } catch (err) {
+        // Silently handle background poll error
+      }
+    };
+
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Periodic subtle refresh of activities/summary as machine tracking accumulates
+  useEffect(() => {
+    const autoRefresh = () => {
+      if (trackerStatus?.isTracking && !trackerStatus?.isIdle) {
+        loadDashboardData();
+      }
+    };
+    const interval = setInterval(autoRefresh, 8000);
+    return () => clearInterval(interval);
+  }, [trackerStatus?.isTracking, trackerStatus?.isIdle, loadDashboardData]);
+
+  // Handlers for Machine Tracker
+  const handleToggleTracker = async () => {
+    try {
+      const res = await toggleMachineTracker();
+      setTrackerStatus(res.status);
+      showToast(res.isTracking ? 'Machine tracking active' : 'Machine tracking paused', 'info');
+      loadDashboardData();
+    } catch (err) {
+      showToast('Failed to toggle machine tracker', 'error');
+    }
+  };
+
+  const handlePollTrackerNow = async () => {
+    setIsPollingTracker(true);
+    try {
+      const res = await pollTrackerNow();
+      if (res?.data) {
+        setTrackerStatus(res.data);
+        showToast(`Synced: ${res.data.currentActivity?.appName || 'Machine activity'}`, 'success');
+      }
+      loadDashboardData();
+    } catch (err) {
+      showToast('Failed to probe machine activity', 'error');
+    } finally {
+      setIsPollingTracker(false);
+    }
+  };
 
   // Live Timer tick
   useEffect(() => {
@@ -223,11 +292,20 @@ export default function App() {
         onSeedData={handleSeedData}
         onClearData={handleClearData}
         isSeeding={isSeeding}
+        trackerStatus={trackerStatus}
       />
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
         
+        {/* Live Machine Activity Tracker Banner */}
+        <LiveMachineTracker
+          trackerStatus={trackerStatus}
+          onToggleTracker={handleToggleTracker}
+          onPollNow={handlePollTrackerNow}
+          isPolling={isPollingTracker}
+        />
+
         {/* Date Filter & Search Controls */}
         <DateRangeFilter
           activePeriod={activePeriod}

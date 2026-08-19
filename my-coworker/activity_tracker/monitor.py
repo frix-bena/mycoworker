@@ -9,6 +9,9 @@ from pathlib import Path
 # Platform-specific imports
 import platform
 
+import subprocess
+import re
+
 if platform.system() == 'Windows':
     import ctypes
     from ctypes import wintypes
@@ -17,6 +20,12 @@ if platform.system() == 'Windows':
         from pynput.keyboard import Listener
     except ImportError:
         Listener = None
+else:
+    try:
+        import psutil
+    except ImportError:
+        psutil = None
+    Listener = None
 
 from database import ActivityDatabase
 from detector import SmartActivityClassifier
@@ -41,25 +50,24 @@ class WindowsActivityMonitor:
     def get_active_window_info():
         """Get the active window application name and title on Windows."""
         try:
-            # Get the foreground window handle
             hwnd = ctypes.windll.user32.GetForegroundWindow()
             if hwnd == 0:
                 return None, None
 
-            # Get window title
             length = ctypes.windll.user32.GetWindowTextLength(hwnd)
             buf = ctypes.create_unicode_buffer(length + 1)
             ctypes.windll.user32.GetWindowText(hwnd, buf, length + 1)
             window_title = buf.value
 
-            # Get process name
             try:
                 pid = wintypes.DWORD()
                 ctypes.windll.user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
-                process = psutil.Process(pid.value)
-                app_name = process.name().replace('.exe', '')
-                return app_name, window_title
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                if psutil:
+                    process = psutil.Process(pid.value)
+                    app_name = process.name().replace('.exe', '')
+                    return app_name, window_title
+                return 'app', window_title
+            except Exception:
                 return None, window_title
 
         except Exception as e:
@@ -84,6 +92,152 @@ class WindowsActivityMonitor:
             return 0
 
 
+class LinuxActivityMonitor:
+    """Linux-specific activity monitoring (GNOME, Wayland, X11, D-Bus, MPRIS, /proc)."""
+
+    @staticmethod
+    def get_idle_duration():
+        """Get idle duration in seconds via Mutter IdleMonitor or xprintidle."""
+        try:
+            out = subprocess.check_output(
+                ["gdbus", "call", "--session", "--dest", "org.gnome.Mutter.IdleMonitor",
+                 "--object-path", "/org/gnome/Mutter/IdleMonitor/Core",
+                 "--method", "org.gnome.Mutter.IdleMonitor.GetIdletime"],
+                text=True, stderr=subprocess.DEVNULL
+            )
+            m = re.search(r"uint64\s+(\d+)", out)
+            if m:
+                return int(m.group(1)) / 1000.0
+        except Exception:
+            pass
+
+        try:
+            out = subprocess.check_output(["xprintidle"], text=True, stderr=subprocess.DEVNULL)
+            return int(out.strip()) / 1000.0
+        except Exception:
+            pass
+
+        return 0.0
+
+    @staticmethod
+    def get_active_media():
+        """Query active media from MPRIS D-Bus interfaces."""
+        try:
+            out = subprocess.check_output(["busctl", "--user", "list"], text=True, stderr=subprocess.DEVNULL)
+            players = [line.split()[0] for line in out.splitlines() if "org.mpris.MediaPlayer2" in line]
+            for p in players:
+                try:
+                    res = subprocess.check_output(
+                        ["gdbus", "call", "--session", "--dest", p,
+                         "--object-path", "/org/mpris/MediaPlayer2",
+                         "--method", "org.freedesktop.DBus.Properties.GetAll",
+                         "org.mpris.MediaPlayer2.Player"],
+                        text=True, stderr=subprocess.DEVNULL
+                    )
+                    if "'PlaybackStatus': <'Playing'>" in res:
+                        title_m = re.search(r"'xesam:title':\s*<'([^']+)'", res)
+                        artist_m = re.search(r"'xesam:artist':\s*<\[(?:'([^']+)')?\]>", res)
+                        player_name = p.replace("org.mpris.MediaPlayer2.", "").split(".")[0].capitalize()
+                        title = title_m.group(1) if title_m else "Media"
+                        artist = artist_m.group(1) if artist_m and artist_m.group(1) else ""
+                        full_title = f"{artist} - {title}" if artist else title
+                        return player_name, full_title
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return None, None
+
+    @staticmethod
+    def get_active_window_info():
+        """Get active window name and title on Linux."""
+        # 1. Check MPRIS if actively playing music/media
+        media_player, media_title = LinuxActivityMonitor.get_active_media()
+
+        # 2. Check X11/Xwayland active window via xprop
+        try:
+            root_out = subprocess.check_output(["xprop", "-root", "_NET_ACTIVE_WINDOW"], text=True, stderr=subprocess.DEVNULL)
+            m = re.search(r"window id # (0x[0-9a-fA-F]+)", root_out)
+            win_id = m.group(1) if m and m.group(1) not in ("0x0", "0x400003") else None
+
+            if not win_id:
+                stack_out = subprocess.check_output(["xprop", "-root", "_NET_CLIENT_LIST_STACKING"], text=True, stderr=subprocess.DEVNULL)
+                sm = re.search(r"window id # ([0-9a-fA-Fx,\s]+)", stack_out)
+                if sm:
+                    ids = [x.strip() for x in sm.group(1).split(",") if x.strip()]
+                    if ids:
+                        win_id = ids[-1]
+
+            if win_id:
+                win_props = subprocess.check_output(["xprop", "-id", win_id, "_NET_WM_NAME", "WM_NAME", "WM_CLASS"], text=True, stderr=subprocess.DEVNULL)
+                title_m = re.search(r'(?:_NET_WM_NAME|WM_NAME)\([^)]+\)\s*=\s*"([^"]+)"', win_props)
+                class_m = re.search(r'WM_CLASS\([^)]+\)\s*=\s*"([^"]+)",\s*"([^"]+)"', win_props)
+                
+                title = title_m.group(1) if title_m else ""
+                app = class_m.group(2) if class_m else (class_m.group(1) if class_m else "")
+                if title and title not in ("hidamari", "Wayland to X Recording bridge", "gnome-shell"):
+                    return app or "App", title
+        except Exception:
+            pass
+
+        # 3. If media is playing, return media activity
+        if media_player:
+            return media_player, media_title
+
+        # 4. Check processes for active IDEs, terminals, browsers
+        try:
+            whoami = subprocess.check_output(["whoami"], text=True, stderr=subprocess.DEVNULL).strip()
+            ps_out = subprocess.check_output(["ps", "-u", whoami, "-o", "comm,args", "--sort=-%cpu"], text=True, stderr=subprocess.DEVNULL)
+            for line in ps_out.splitlines()[1:]:
+                l = line.lower()
+                if "antigravity" in l:
+                    return "antigravity", "Antigravity IDE — Agentic Coding"
+                if "/code" in l or "code --" in l:
+                    return "vscode", "Visual Studio Code"
+                if "cursor" in l:
+                    return "cursor", "Cursor AI Editor"
+                if "brave" in l:
+                    return "brave", "Brave Browser"
+                if "chrome" in l:
+                    return "chrome", "Google Chrome"
+                if "firefox" in l:
+                    return "firefox", "Mozilla Firefox"
+                if "claude" in l:
+                    return "claude", "Claude Desktop"
+                if "spotify" in l:
+                    return "spotify", "Spotify Music"
+        except Exception:
+            pass
+
+        return "System", "Desktop Workspace"
+
+
+class MacOSActivityMonitor:
+    """macOS-specific activity monitoring."""
+
+    @staticmethod
+    def get_active_window_info():
+        try:
+            cmd = ['osascript', '-e', 'tell application "System Events" to get {name, title} of first application process whose frontmost is true']
+            out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
+            parts = out.strip().split(', ')
+            if parts:
+                app = parts[0]
+                title = parts[1] if len(parts) > 1 else app
+                return app, title
+        except Exception:
+            pass
+        return "macOS", "Desktop"
+
+    @staticmethod
+    def get_idle_duration():
+        try:
+            out = subprocess.check_output("ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1000000000); exit}'", shell=True, text=True)
+            return float(out.strip())
+        except Exception:
+            return 0.0
+
+
 class ActivityMonitor:
     """Main activity monitoring service."""
 
@@ -103,9 +257,6 @@ class ActivityMonitor:
 
         # Platform detection
         self.platform = platform.system()
-        if self.platform != 'Windows':
-            logger.warning(f"Activity Monitor is optimized for Windows. Current platform: {self.platform}")
-
         logger.info(f"ActivityMonitor initialized on {self.platform}")
 
     def start(self):
@@ -115,7 +266,7 @@ class ActivityMonitor:
             return
 
         self.running = True
-        logger.info("Starting activity monitor...")
+        logger.info(f"Starting activity monitor on {self.platform}...")
 
         # Start monitoring thread
         self.monitoring_thread = threading.Thread(target=self._monitor_loop, daemon=True)
@@ -129,7 +280,7 @@ class ActivityMonitor:
             self.keyboard_listener_thread.start()
             logger.info("Keyboard listener started")
         else:
-            logger.warning("Keyboard listener not available on this platform")
+            logger.info("Using system idle monitor for activity detection")
 
         logger.info("Activity monitor started successfully")
 
@@ -150,10 +301,20 @@ class ActivityMonitor:
             try:
                 if self.platform == 'Windows':
                     app_name, window_title = WindowsActivityMonitor.get_active_window_info()
+                    idle_sec = WindowsActivityMonitor.get_idle_duration()
+                elif self.platform == 'Linux':
+                    app_name, window_title = LinuxActivityMonitor.get_active_window_info()
+                    idle_sec = LinuxActivityMonitor.get_idle_duration()
+                elif self.platform == 'Darwin':
+                    app_name, window_title = MacOSActivityMonitor.get_active_window_info()
+                    idle_sec = MacOSActivityMonitor.get_idle_duration()
                 else:
-                    app_name, window_title = None, None
+                    app_name, window_title = 'System', 'Workspace'
+                    idle_sec = 0
 
-                if app_name and app_name.lower() != 'none':
+                is_user_active = idle_sec < KEYBOARD_TIMEOUT
+
+                if app_name and app_name.lower() != 'none' and is_user_active:
                     # Detect activity
                     category, app_display, confidence = self.classifier.classify(
                         app_name, window_title, self.keyboard_active

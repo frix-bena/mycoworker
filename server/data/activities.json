@@ -1,5 +1,41 @@
 [
   {
+    "id": "88dd4864-f9d2-407c-93dd-1a634cabe39a",
+    "title": "Claude",
+    "appName": "Claude",
+    "category": "work",
+    "duration": 237,
+    "startTime": "2026-08-19T19:09:34.721Z",
+    "endTime": "2026-08-19T19:13:32.072Z",
+    "notes": "Background Music: Sam Smith - Too Good At Goodbyes",
+    "createdAt": "2026-08-19T19:09:34.722Z",
+    "updatedAt": "2026-08-19T19:13:32.073Z"
+  },
+  {
+    "id": "31f4d2c3-b23f-4987-92e5-0ad6d6f7dd89",
+    "title": "Claude",
+    "appName": "Claude",
+    "category": "work",
+    "duration": 60,
+    "startTime": "2026-08-19T19:03:43.026Z",
+    "endTime": "2026-08-19T19:04:43.080Z",
+    "notes": "Background Music: James Arthur - Impossible",
+    "createdAt": "2026-08-19T19:03:43.027Z",
+    "updatedAt": "2026-08-19T19:04:43.080Z"
+  },
+  {
+    "id": "2ebaad0b-bccc-4a67-aedc-6291c558fef7",
+    "title": "Claude",
+    "appName": "Claude",
+    "category": "other",
+    "duration": 51,
+    "startTime": "2026-08-19T19:02:35.630Z",
+    "endTime": "2026-08-19T19:03:26.694Z",
+    "notes": "Background Music: The Fray - How to Save a Life",
+    "createdAt": "2026-08-19T19:02:35.630Z",
+    "updatedAt": "2026-08-19T19:03:26.696Z"
+  },
+  {
     "id": "fd7c60ee-a870-4482-8551-26003ad809a3",
     "title": "MDN Web Docs & StackOverflow",
     "appName": "Google Chrome",

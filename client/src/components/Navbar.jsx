@@ -17,7 +17,8 @@ export default function Navbar({
   timerSeconds,
   onSeedData, 
   onClearData,
-  isSeeding 
+  isSeeding,
+  trackerStatus 
 }) {
   const [time, setTime] = useState(new Date());
 
@@ -25,6 +26,10 @@ export default function Navbar({
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const isTracking = trackerStatus?.isTracking ?? true;
+  const isIdle = trackerStatus?.isIdle ?? false;
+  const currentApp = trackerStatus?.currentActivity?.appName;
 
   return (
     <header className="sticky top-0 z-30 bg-[#070b12]/90 backdrop-blur-md border-b border-slate-800/80 px-4 lg:px-8 py-3.5">
@@ -40,14 +45,26 @@ export default function Navbar({
               <h1 className="text-lg font-bold text-slate-100 tracking-tight flex items-center gap-2">
                 Activity Tracker
                 <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  v2.0 Web
+                  v2.0 Live
                 </span>
               </h1>
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 live-indicator"></span>
-                <span className="text-emerald-400 font-medium">Local-first Monitor</span>
+                <span className={`w-2 h-2 rounded-full ${
+                  !isTracking ? 'bg-slate-500' : isIdle ? 'bg-amber-400' : 'bg-emerald-400 live-indicator'
+                }`}></span>
+                <span className={
+                  !isTracking ? 'text-slate-400' : isIdle ? 'text-amber-400 font-medium' : 'text-emerald-400 font-medium'
+                }>
+                  {!isTracking 
+                    ? 'Tracker Paused' 
+                    : isIdle 
+                    ? 'Machine Idle' 
+                    : currentApp 
+                    ? `Live: ${currentApp}` 
+                    : 'Machine Active'}
+                </span>
               </span>
               <span>•</span>
               <span className="font-mono text-slate-400">
