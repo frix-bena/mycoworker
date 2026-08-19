@@ -1,14 +1,15 @@
 <div align="center">
 
-# 📊 Activity Tracker
+# ⚡ Activity Tracker
 
-**A local-first PC activity tracker that shows you where your time actually goes — coding, music, or everything else.**
+**A modern, local-first developer activity and productivity tracker that shows where your time actually goes — Coding, Music, Work, or Learning.**
 
-[![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![License](https://img.shields.io/badge/License-Personal%20Use-lightgrey)](#-license)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-informational)](#-system-requirements)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/Frontend-React%2018%20%2B%20Vite-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Express](https://img.shields.io/badge/Backend-Express.js-000000?logo=express&logoColor=white)](https://expressjs.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind%20CSS-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Chart.js](https://img.shields.io/badge/Charts-Chart.js-FF6384?logo=chart.js&logoColor=white)](https://www.chartjs.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 </div>
 
@@ -18,151 +19,181 @@
 
 - [About](#-about)
 - [Features](#-features)
-- [Demo](#-demo)
-- [System Requirements](#-system-requirements)
+- [Tech Stack](#-tech-stack)
 - [Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#1-install-dependencies)
+  - [Running Development Server](#2-start-development-mode)
+  - [Production Build](#3-production-build)
 - [Project Structure](#-project-structure)
+- [API Reference](#-api-reference)
 - [Configuration](#-configuration)
-- [Database Schema](#-database-schema)
-- [Privacy](#-privacy)
-- [Testing](#-testing)
-- [Troubleshooting](#-troubleshooting)
-- [Roadmap](#-roadmap)
-- [License](#-license)
+- [Privacy & Offline Guarantee](#-privacy--offline-guarantee)
 
 ---
 
 ## 🎯 About
 
-**Activity Tracker** runs quietly in the background, watches which application window is active, and classifies your time into **Coding**, **Music**, or **Other** — then visualizes it in a clean local dashboard. No accounts, no cloud sync, no external servers. Everything lives in a SQLite database on your own machine.
+**Activity Tracker** is a full-stack web application designed for developers who want an accurate, private, and effortless record of their daily workflow. Whether you want to measure hours spent writing code, quantify time listening to focus music, or track project milestones, everything is visualized in a sleek dark-themed dashboard.
 
-Built for developers who want an honest picture of how a day actually breaks down.
+All data is stored locally on your machine with zero external cloud dependencies.
 
 ---
 
 ## ✨ Features
 
-| | |
+| Feature | Description |
 |---|---|
-| 🕒 **Real-time monitoring** | Tracks the active app/window every 5 seconds |
-| 🧠 **Smart classification** | Pattern-based detection for Coding / Music / Other |
-| ⌨️ **Keyboard activity signal** | Boosts confidence when you're actively typing (activity only — never keystroke content) |
-| 🗄️ **Local SQLite storage** | Fully offline, fully private |
-| 📊 **Interactive dashboard** | Streamlit-powered, with charts and breakdowns |
-| 📅 **Flexible time ranges** | Today, Last 7 Days, Last 30 Days, or a custom range |
-| 🖥️ **Top applications view** | See exactly which apps eat your time |
+| ⏱️ **Live Activity Stopwatch** | Real-time stopwatch with start/pause/save controls and smart auto-categorization |
+| 📝 **Manual Activity Logging** | Easily log past work sessions, window titles, dates, durations, and notes |
+| 📊 **Interactive Analytics** | Real-time Doughnut charts, 24-hour hourly timeline bars, and multi-day trend graphs |
+| 🖥️ **Top Applications Ranking** | View your most-used IDEs, music players, and tools with visual distribution bars |
+| 📅 **Flexible Date Filtering** | Filter dashboard metrics by Today, Yesterday, Last 7 Days, Last 30 Days, or Custom ranges |
+| 🔍 **Search & Category Filters** | Filter activity logs by keyword, category (*Coding*, *Music*, *Work*, *Learning*, *Other*) |
+| 🗄️ **Persistent Local Storage** | Atomic file-based JSON storage that persists across sessions |
+| 🪄 **Demo Data Generator** | One-click button to seed realistic activity logs across past days for instant preview |
 
 ---
 
-## 🖼️ Demo
+## 🛠️ Tech Stack
 
-> _Add a screenshot or GIF of your dashboard here once it's running:_
-> ```markdown
-> ![Dashboard Screenshot](./assets/dashboard-preview.png)
-> ```
-
----
-
-## 🖥️ System Requirements
-
-- **OS:** Windows 7+ (primary support) · Linux/macOS (partial support)
-- **Python:** 3.8 or higher
-- **RAM:** 512 MB minimum
-- **Disk:** ~10 MB
+- **Frontend**: React 18, Vite 6, Tailwind CSS, Lucide Icons, Chart.js, React-Chartjs-2
+- **Backend**: Node.js, Express.js, Morgan logger, CORS
+- **Workspace Architecture**: Root npm workspaces linking `client/` and `server/` with `concurrently`
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Clone the repository
+### Prerequisites
+
+- **Node.js**: v18.0.0 or higher (v20+ or v22+ recommended)
+- **npm**: v9.0.0 or higher
+
+### 1. Install Dependencies
+
+Clone the repository and install all dependencies for both frontend and backend in one step:
 
 ```bash
+# Clone the repository
 git clone https://github.com/frix-bena/mycoworker.git
-cd mycoworker/activity_tracker
+cd mycowoker
+
+# Install root, server, and client dependencies
+npm install
 ```
 
-### 2. Install dependencies
+### 2. Start Development Mode
+
+Run the unified `dev` script to concurrently launch both the Express backend API and the Vite frontend:
 
 ```bash
-pip install -r requirements.txt
+npm run dev
 ```
 
-### 3. Start the monitor
+- **Frontend Dashboard**: [http://localhost:5173](http://localhost:5173)
+- **Backend API**: [http://localhost:5000](http://localhost:5000)
+
+*(Vite automatically proxies `/api` requests to port 5000 during development).*
+
+### 3. Production Build
+
+To build the client and run the unified production server:
 
 ```bash
-# Linux/macOS
-bash start_monitor.sh
+# Build optimized client static assets
+npm run build
 
-# Windows
-start_monitor.bat
-
-# Or directly
-python service.py
+# Start production server (serves API & static frontend on port 5000)
+npm start
 ```
-
-### 4. Launch the dashboard
-
-In a **separate terminal**:
-
-```bash
-# Linux/macOS
-bash start_dashboard.sh
-
-# Windows
-start_dashboard.bat
-
-# Or directly
-streamlit run dashboard.py
-```
-
-The dashboard opens automatically at **http://localhost:8501**.
-
-> ⚠️ **Note:** Streamlit apps must be *run*, not opened as static files. Opening `dashboard.py` or the project folder directly in a browser will not work — always launch it with `streamlit run`.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-activity_tracker/
-├── config.py                  # Configuration and app category definitions
-├── database.py                 # SQLite database operations
-├── detector.py                  # Activity detection & classification logic
-├── monitor.py                    # Core monitoring service
-├── service.py                     # Background service wrapper
-├── dashboard.py                    # Streamlit web dashboard
-├── setup.py                         # Setup and dependency installer
-├── test_setup.py                     # System self-test script
-├── generate_sample_data.py            # Sample data generator for testing
-├── requirements.txt                    # Python dependencies
-├── start_monitor.sh / .bat              # Monitor launch scripts
-├── start_dashboard.sh / .bat             # Dashboard launch scripts
-└── data/                                  # SQLite database + logs (git-ignored)
+mycowoker/
+├── package.json               # Root workspace orchestrator & dev scripts
+├── .gitignore                 # Git ignore rules
+├── README.md                  # Project documentation
+│
+├── server/                    # Express Backend
+│   ├── package.json           # Server dependencies
+│   ├── index.js               # Express server entry point & static fallback
+│   ├── db.js                  # Persistent file store, category detector & sample seed
+│   ├── routes/
+│   │   ├── activities.js      # CRUD API routes (/api/activities)
+│   │   └── stats.js           # Analytics & aggregation routes (/api/stats/summary)
+│   └── data/
+│       └── activities.json    # Local persistent activity database
+│
+└── client/                    # React + Vite Frontend
+    ├── package.json           # Frontend dependencies
+    ├── vite.config.js         # Vite configuration with /api proxy
+    ├── tailwind.config.js     # Tailwind design system configuration
+    ├── index.html             # HTML entry point
+    └── src/
+        ├── main.jsx           # React DOM root
+        ├── App.jsx            # Main dashboard application layout & state
+        ├── index.css          # Global styles & animations
+        ├── components/
+        │   ├── Navbar.jsx            # Header, live clock & action buttons
+        │   ├── StatCards.jsx         # Metric summary cards
+        │   ├── LiveTimer.jsx         # Live stopwatch tracker widget
+        │   ├── ChartsSection.jsx     # Chart.js visualizations (Donut, Timeline, Daily)
+        │   ├── TopAppsTable.jsx      # Top applications & tools ranking
+        │   ├── ActivityList.jsx      # Activity log table with search & delete
+        │   ├── ActivityFormModal.jsx # Add/edit manual activity modal
+        │   └── DateRangeFilter.jsx   # Date range selector & search bar
+        ├── services/
+        │   └── api.js                # API client helper functions
+        └── utils/
+            └── formatters.js         # Duration, date, and category formatting helpers
 ```
+
+---
+
+## 📡 API Reference
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/health` | Service health check and activity count |
+| `GET` | `/api/activities` | List activities (`?start=YYYY-MM-DD&end=YYYY-MM-DD&category=coding&search=term`) |
+| `GET` | `/api/activities/:id` | Get single activity by ID |
+| `POST` | `/api/activities` | Create a new activity entry |
+| `PUT` | `/api/activities/:id` | Update an existing activity |
+| `DELETE` | `/api/activities/:id` | Delete an activity by ID |
+| `GET` | `/api/stats/summary` | Aggregate analytics metrics, category breakdown & timeline |
+| `POST` | `/api/activities/seed` | Seed realistic demo activities across the past 7 days |
+| `DELETE` | `/api/activities/clear/all` | Clear all activities |
 
 ---
 
 ## ⚙️ Configuration
 
-Edit `config.py` to customize behavior:
+Category mappings and auto-detection rules can be configured in [`server/db.js`](file:///home/frix/mycowoker/server/db.js#L20-L50):
 
-```python
-MONITOR_INTERVAL = 5        # Check active window every 5 seconds
-KEYBOARD_TIMEOUT = 30       # Consider activity idle after 30s of no input
-DATA_RETENTION_DAYS = 90    # How long to keep historical data
+```javascript
+export const APP_CATEGORY_MAP = {
+  'vscode': 'coding',
+  'cursor': 'coding',
+  'spotify': 'music',
+  'chrome': 'work',
+  // Add custom applications as needed
+};
 ```
 
-Add or edit tracked applications:
+---
 
-```python
-CODING_APPS = {
-    'vscode': 'Visual Studio Code',
-    'pycharm': 'PyCharm',
-    # add more as needed
-}
+## 🔒 Privacy & Offline Guarantee
 
-MUSIC_APPS = {
-    'spotify': 'Spotify',
-    'youtube': 'YouTube',
-    # add more as needed
-}
+- **100% Offline**: No network traffic leaves your machine.
+- **Local Storage**: All activity logs reside in `server/data/activities.json`.
+- **Zero Cloud Sync**: Your workflow data is strictly private.
+
+---
+
+<div align="center">
+  <b>Built with ❤️ for tracking your productivity</b>
+</div>
