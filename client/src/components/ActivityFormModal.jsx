@@ -4,15 +4,12 @@ import { detectCategory } from '../utils/formatters';
 import AppIcon from './AppIcon';
 
 const COMMON_APPS = [
+  { name: 'Antigravity', cat: 'coding' },
   { name: 'Visual Studio Code', cat: 'coding' },
-  { name: 'Cursor', cat: 'coding' },
+  { name: 'WebStorm', cat: 'coding' },
   { name: 'Terminal', cat: 'coding' },
-  { name: 'Spotify', cat: 'music' },
-  { name: 'YouTube Music', cat: 'music' },
-  { name: 'Google Chrome', cat: 'work' },
-  { name: 'Figma', cat: 'work' },
-  { name: 'Slack', cat: 'work' },
-  { name: 'Notion', cat: 'study' }
+  { name: 'Claude', cat: 'work' },
+  { name: 'Brave', cat: 'work' }
 ];
 
 export default function ActivityFormModal({

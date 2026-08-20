@@ -550,15 +550,10 @@ class ActivityStore {
       { name: 'Antigravity', title: 'mycowoker — LiveMachineTracker.jsx (main)', cat: 'coding', workspace: 'mycowoker', gitBranch: 'main', file: 'LiveMachineTracker.jsx', notes: 'Integrated real-time IDE activity detection across running editors' },
       { name: 'Antigravity', title: 'autoscroll — background.js', cat: 'coding', workspace: 'autoscroll', gitBranch: 'master', file: 'background.js', notes: 'Tested Chrome extension auto-scrolling worker' },
       { name: 'Visual Studio Code', title: 'mycowoker — server.js (main)', cat: 'coding', workspace: 'mycowoker', gitBranch: 'main', file: 'server.js', notes: 'Implemented REST endpoints and SQLite/JSON storage layer' },
-      { name: 'Cursor', title: 'videogenerator — render.py', cat: 'coding', workspace: 'videogenerator', gitBranch: 'main', file: 'render.py', notes: 'Optimized video encoding pipeline and async queue' },
+      { name: 'WebStorm', title: 'mycowoker — App.jsx (main)', cat: 'coding', workspace: 'mycowoker', gitBranch: 'main', file: 'App.jsx', notes: 'Configured React components and state management' },
       { name: 'Terminal', title: 'npm run dev — vite & express', cat: 'coding', workspace: 'mycowoker', gitBranch: 'main', file: 'package.json', notes: 'Testing dev script and build outputs' },
-      { name: 'PyCharm', title: 'activity_tracker — detector.py', cat: 'coding', workspace: 'activity_tracker', gitBranch: 'main', file: 'detector.py', notes: 'AI heuristic pattern classifier' },
-      { name: 'Spotify', title: 'Deep Focus — Synthwave & Lofi Beats', cat: 'music', notes: 'Background music while coding' },
-      { name: 'YouTube Music', title: 'Chill Coding Playlist', cat: 'music', notes: 'Relaxing playlist during afternoon work session' },
-      { name: 'Google Chrome', title: 'MDN Web Docs & StackOverflow', cat: 'work', notes: 'Researched React hooks and Tailwind grid layouts' },
-      { name: 'Slack', title: 'Team standup & project discussions', cat: 'work', notes: 'Sync with frontend design team' },
-      { name: 'Figma', title: 'Activity Tracker UI Design System', cat: 'work', notes: 'Reviewed color palette and dashboard widgets' },
-      { name: 'Notion', title: 'Sprint Backlog & Task Planning', cat: 'study', notes: 'Organized roadmap milestones for v2.0 release' }
+      { name: 'Claude', title: 'Architecting local-first activity detection', cat: 'work', notes: 'Discussed process introspection and MPRIS media detection' },
+      { name: 'Brave Browser', title: 'MDN Web Docs & Tailwind Documentation', cat: 'work', notes: 'Researched React hooks and Tailwind grid layouts' }
     ];
 
     const sampleActivities = [];
