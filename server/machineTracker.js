@@ -90,7 +90,6 @@ export class MachineTracker {
     let idleSeconds = 0;
     let activeWindow = null;
     let media = null;
-    let topProcesses = [];
 
     // 1. Idle time via GNOME Mutter IdleMonitor or xprintidle
     try {
@@ -105,7 +104,9 @@ export class MachineTracker {
       } catch (e2) {}
     }
 
-    // 2. Media via MPRIS (Spotify, Brave/Chrome/Firefox YouTube/Music, VLC, etc.)
+    const isIdle = idleSeconds > this.idleThresholdSecs;
+
+    // 2. Media via MPRIS (Spotify, Brave/Chrome/Firefox YouTube/Music, VLC, Amberol, etc.)
     try {
       const { stdout } = await execAsync('busctl --user list');
       const mprisLines = stdout.split('\n').filter(l => l.includes('org.mpris.MediaPlayer2'));
@@ -153,7 +154,19 @@ export class MachineTracker {
           if (stackMatch) {
             const ids = stackMatch[1].split(',').map(s => s.trim()).filter(Boolean);
             if (ids.length > 0) {
-              winId = ids[ids.length - 1];
+              // Iterate from top to bottom of stacking list to find real window
+              for (let i = ids.length - 1; i >= 0; i--) {
+                const testId = ids[i];
+                try {
+                  const { stdout: testProps } = await execAsync(`xprop -id ${testId} _NET_WM_NAME WM_NAME WM_CLASS`);
+                  const tMatch = testProps.match(/(?:_NET_WM_NAME|WM_NAME)\([^)]+\)\s*=\s*"([^"]+)"/);
+                  const title = tMatch ? tMatch[1] : '';
+                  if (title && !['hidamari', 'Wayland to X Recording bridge', 'gnome-shell', 'xwaylandvideobridge'].includes(title)) {
+                    winId = testId;
+                    break;
+                  }
+                } catch (e) {}
+              }
             }
           }
         } catch (e) {}
@@ -170,7 +183,7 @@ export class MachineTracker {
           const rawClass = classMatch ? (classMatch[2] || classMatch[1]) : '';
           
           // Ignore desktop overlay backgrounds
-          if (rawTitle && !['hidamari', 'Wayland to X Recording bridge', 'gnome-shell'].includes(rawTitle)) {
+          if (rawTitle && !['hidamari', 'Wayland to X Recording bridge', 'gnome-shell', 'xwaylandvideobridge'].includes(rawTitle)) {
             activeWindow = {
               id: winId,
               title: rawTitle,
@@ -182,83 +195,25 @@ export class MachineTracker {
       }
     } catch (e) {}
 
-    // 4. Process inspection (detect active IDEs, terminals, browsers, apps)
-    try {
-      const { stdout: psOut } = await execAsync('ps -u $(whoami) -o pid,%cpu,comm,args --sort=-%cpu');
-      const lines = psOut.split('\n').slice(1);
-      
-      let topEditor = null;
-      let topBrowser = null;
-      let topDev = null;
-      let topOther = null;
-
-      for (const line of lines) {
-        const parts = line.trim().split(/\s+/);
-        if (parts.length < 4) continue;
-        const cpu = parseFloat(parts[1]) || 0;
-        const comm = parts[2];
-        const args = parts.slice(3).join(' ');
-
-        if (comm.includes('antigravity') || args.includes('antigravity')) {
-          if (!topEditor || cpu > topEditor.cpu) {
-            topEditor = { name: 'Antigravity', title: 'Antigravity IDE — Agentic Coding', category: 'coding', cpu };
-          }
-        } else if (comm === 'code' || args.includes('/usr/share/code/code')) {
-          if (!topEditor || cpu > topEditor.cpu) {
-            topEditor = { name: 'Visual Studio Code', title: 'Visual Studio Code', category: 'coding', cpu };
-          }
-        } else if (comm.includes('cursor') || args.includes('cursor')) {
-          if (!topEditor || cpu > topEditor.cpu) {
-            topEditor = { name: 'Cursor', title: 'Cursor AI Editor', category: 'coding', cpu };
-          }
-        } else if (['brave', 'chrome', 'firefox', 'zen'].some(b => comm.includes(b) || args.includes(b))) {
-          if (!topBrowser || cpu > topBrowser.cpu) {
-            const bName = comm.includes('brave') ? 'Brave Browser' : comm.includes('chrome') ? 'Google Chrome' : 'Firefox';
-            topBrowser = { name: bName, title: `${bName} — Web Browsing`, category: 'work', cpu };
-          }
-        } else if (['claude', 'slack', 'discord', 'notion', 'figma'].some(a => comm.includes(a) || args.includes(a))) {
-          if (!topOther || cpu > topOther.cpu) {
-            const aName = comm.charAt(0).toUpperCase() + comm.slice(1);
-            topOther = { name: aName, title: `${aName} Application`, category: 'work', cpu };
-          }
-        } else if (['node', 'python', 'npm', 'cargo', 'git', 'docker', 'bash'].some(d => comm === d)) {
-          if (!topDev || cpu > topDev.cpu) {
-            topDev = { name: 'Terminal', title: `Terminal — ${comm}`, category: 'coding', cpu };
-          }
-        }
-      }
-
-      topProcesses = [topEditor, topBrowser, topOther, topDev].filter(Boolean);
-    } catch (e) {}
-
-    // Resolve active app, title, and category
+    // Resolve active app, title, and category ONLY from real active window or media (NO GUESSING)
     let appName = null;
     let windowTitle = null;
     let category = 'other';
     let notes = '';
 
-    if (activeWindow && activeWindow.title) {
+    if (activeWindow && (activeWindow.title || activeWindow.wmClass)) {
       appName = this._formatAppName(activeWindow.wmClass || activeWindow.title);
-      windowTitle = activeWindow.title;
+      windowTitle = activeWindow.title || appName;
       category = detectCategory(appName, windowTitle);
     } else if (media && media.isPlaying) {
       appName = media.player || 'Music Player';
       windowTitle = `${media.artist ? media.artist + ' - ' : ''}${media.title}`;
       category = 'music';
       notes = `Playing on ${media.player}${media.album ? ` (${media.album})` : ''}`;
-    } else if (topProcesses.length > 0) {
-      const top = topProcesses[0];
-      appName = top.name;
-      windowTitle = top.title;
-      category = top.category;
-    } else {
-      appName = 'System Workspace';
-      windowTitle = 'Desktop Activity';
-      category = 'other';
     }
 
-    // Enhance notes if media is playing in background while coding/working
-    if (media && media.isPlaying && category !== 'music') {
+    // Enhance notes if media is playing in background while working in another app
+    if (media && media.isPlaying && appName && category !== 'music') {
       notes = `Background Music: ${media.artist ? media.artist + ' - ' : ''}${media.title}`;
     }
 
@@ -267,7 +222,7 @@ export class MachineTracker {
       windowTitle,
       category,
       idleSeconds,
-      isIdle: idleSeconds > this.idleThresholdSecs,
+      isIdle,
       media,
       notes
     };
@@ -275,8 +230,8 @@ export class MachineTracker {
 
   async _detectWindows() {
     let idleSeconds = 0;
-    let appName = 'System';
-    let windowTitle = 'Windows Desktop';
+    let appName = null;
+    let windowTitle = null;
     let category = 'other';
 
     try {
@@ -302,28 +257,32 @@ export class MachineTracker {
           }
 "@
         $hwnd = [WinUtil]::GetForegroundWindow()
-        $sb = New-Object System.Text.StringBuilder 256
-        [WinUtil]::GetWindowText($hwnd, $sb, 256) | Out-Null
-        $title = $sb.ToString()
-        $pid = 0
-        [WinUtil]::GetWindowThreadProcessId($hwnd, [ref]$pid) | Out-Null
-        $proc = if ($pid -gt 0) { (Get-Process -Id $pid -ErrorAction SilentlyContinue).ProcessName } else { "" }
-        $idle = [WinUtil]::GetIdle()
-        @{ App = $proc; Title = $title; Idle = $idle } | ConvertTo-Json -Compress
+        if ($hwnd -ne [IntPtr]::Zero) {
+          $sb = New-Object System.Text.StringBuilder 256
+          [WinUtil]::GetWindowText($hwnd, $sb, 256) | Out-Null
+          $title = $sb.ToString()
+          $pid = 0
+          [WinUtil]::GetWindowThreadProcessId($hwnd, [ref]$pid) | Out-Null
+          $proc = if ($pid -gt 0) { (Get-Process -Id $pid -ErrorAction SilentlyContinue).ProcessName } else { "" }
+          $idle = [WinUtil]::GetIdle()
+          @{ App = $proc; Title = $title; Idle = $idle } | ConvertTo-Json -Compress
+        } else {
+          $idle = [WinUtil]::GetIdle()
+          @{ App = ""; Title = ""; Idle = $idle } | ConvertTo-Json -Compress
+        }
       `;
 
       const { stdout } = await execAsync(`powershell -NoProfile -NonInteractive -Command "${psScript.replace(/\n/g, ' ')}"`);
       const parsed = JSON.parse(stdout.trim());
-      if (parsed) {
-        appName = this._formatAppName(parsed.App || 'Windows App');
+      if (parsed && (parsed.App || parsed.Title)) {
+        appName = this._formatAppName(parsed.App || parsed.Title);
         windowTitle = parsed.Title || appName;
         idleSeconds = parseInt(parsed.Idle, 10) || 0;
         category = detectCategory(appName, windowTitle);
+      } else if (parsed) {
+        idleSeconds = parseInt(parsed.Idle, 10) || 0;
       }
-    } catch (e) {
-      appName = 'Windows Desktop';
-      windowTitle = 'System Workspace';
-    }
+    } catch (e) {}
 
     return {
       appName,
@@ -337,15 +296,15 @@ export class MachineTracker {
   }
 
   async _detectMacOS() {
-    let appName = 'macOS';
-    let windowTitle = 'Desktop';
+    let appName = null;
+    let windowTitle = null;
     let category = 'other';
     let idleSeconds = 0;
 
     try {
       const { stdout } = await execAsync(`osascript -e 'tell application "System Events" to get {name, title} of first application process whose frontmost is true'`);
       const parts = stdout.trim().split(', ');
-      if (parts.length > 0) {
+      if (parts.length > 0 && parts[0]) {
         appName = this._formatAppName(parts[0]);
         windowTitle = parts[1] || appName;
         category = detectCategory(appName, windowTitle);
@@ -370,9 +329,9 @@ export class MachineTracker {
 
   async _detectGeneric() {
     return {
-      appName: 'Local Machine',
-      windowTitle: 'Active Workspace',
-      category: 'work',
+      appName: null,
+      windowTitle: null,
+      category: null,
       idleSeconds: 0,
       isIdle: false,
       media: null,
@@ -381,7 +340,7 @@ export class MachineTracker {
   }
 
   _formatAppName(rawName) {
-    if (!rawName) return 'Application';
+    if (!rawName) return '';
     const lower = rawName.toLowerCase();
     if (lower.includes('antigravity')) return 'Antigravity';
     if (lower.includes('code') || lower.includes('vscode')) return 'Visual Studio Code';
@@ -394,7 +353,15 @@ export class MachineTracker {
     if (lower.includes('slack')) return 'Slack';
     if (lower.includes('discord')) return 'Discord';
     if (lower.includes('notion')) return 'Notion';
-    if (lower.includes('terminal') || lower.includes('ptyxis') || lower.includes('bash')) return 'Terminal';
+    if (lower.includes('terminal') || lower.includes('ptyxis') || lower.includes('alacritty') || lower.includes('kitty') || lower.includes('bash')) return 'Terminal';
+    
+    if (rawName.includes('.')) {
+      const parts = rawName.split('.');
+      const lastPart = parts[parts.length - 1];
+      if (lastPart.length > 1) {
+        return lastPart.charAt(0).toUpperCase() + lastPart.slice(1);
+      }
+    }
     return rawName.charAt(0).toUpperCase() + rawName.slice(1);
   }
 
@@ -413,10 +380,32 @@ export class MachineTracker {
       return;
     }
 
-    const appName = probe.appName;
-    const windowTitle = probe.windowTitle;
-    const category = probe.category;
-    const notes = probe.notes || '';
+    // If no active app and no active media, finalize current activity
+    if (!probe.appName && (!probe.media || !probe.media.isPlaying)) {
+      if (this.currentActivity) {
+        await this._finalizeCurrentActivity();
+      }
+      return;
+    }
+
+    let appName = probe.appName;
+    let windowTitle = probe.windowTitle;
+    let category = probe.category;
+    let notes = probe.notes || '';
+
+    if (!appName && probe.media && probe.media.isPlaying) {
+      appName = probe.media.player || 'Music Player';
+      windowTitle = `${probe.media.artist ? probe.media.artist + ' - ' : ''}${probe.media.title}`;
+      category = 'music';
+      notes = `Playing on ${probe.media.player}${probe.media.album ? ` (${probe.media.album})` : ''}`;
+    }
+
+    if (!appName) {
+      if (this.currentActivity) {
+        await this._finalizeCurrentActivity();
+      }
+      return;
+    }
 
     // Check if continuing same activity session
     if (this.currentActivity && this.currentActivity.appName === appName && this.currentActivity.category === category) {

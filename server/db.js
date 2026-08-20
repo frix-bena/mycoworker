@@ -76,6 +76,11 @@ export const APP_CATEGORY_MAP = {
 
 export function detectCategory(appName, title = '') {
   const target = `${appName} ${title}`.toLowerCase();
+  
+  if (target.includes('github') || target.includes('gitlab') || target.includes('stackoverflow') || target.includes('stack overflow') || target.includes('localhost') || target.includes('127.0.0.1')) {
+    return 'coding';
+  }
+
   for (const [key, category] of Object.entries(APP_CATEGORY_MAP)) {
     if (target.includes(key)) {
       return category;
@@ -95,12 +100,12 @@ class ActivityStore {
       try {
         const content = await fs.readFile(DATA_FILE, 'utf-8');
         const data = JSON.parse(content);
-        if (!Array.isArray(data) || data.length === 0) {
-          await this.seedSampleData();
+        if (!Array.isArray(data)) {
+          await this._writeData([]);
         }
       } catch (err) {
-        // File doesn't exist or is invalid JSON
-        await this.seedSampleData();
+        // File doesn't exist or is invalid JSON - start with clean empty array
+        await this._writeData([]);
       }
       this.initialized = true;
     } catch (err) {

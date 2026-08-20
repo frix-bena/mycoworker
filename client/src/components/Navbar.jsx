@@ -63,7 +63,7 @@ export default function Navbar({
                     ? 'Machine Idle' 
                     : currentApp 
                     ? `Live: ${currentApp}` 
-                    : 'Machine Active'}
+                    : 'Active (No App Focused)'}
                 </span>
               </span>
               <span>•</span>

@@ -163,12 +163,12 @@ export default function LiveMachineTracker({
             {/* Application Name & Active Window Title */}
             <div className="flex items-center gap-2">
               <h2 className="text-base sm:text-lg font-bold text-slate-100 truncate tracking-tight">
-                {currentAct ? currentAct.appName : 'Analyzing machine activity...'}
+                {currentAct ? currentAct.appName : (isIdle ? 'Machine Idle' : 'No Active Foreground Window')}
               </h2>
             </div>
             
             <p className="text-xs text-slate-400 truncate max-w-2xl font-normal mt-0.5">
-              {currentAct?.title || 'Tracking active window and background tasks in real-time'}
+              {currentAct?.title || (isIdle ? 'No user input detected on machine' : 'Tracking real-time foreground application and active media only')}
             </p>
 
             {/* Rich notes / Media banner */}

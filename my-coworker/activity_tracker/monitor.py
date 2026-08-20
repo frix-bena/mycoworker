@@ -66,7 +66,7 @@ class WindowsActivityMonitor:
                     process = psutil.Process(pid.value)
                     app_name = process.name().replace('.exe', '')
                     return app_name, window_title
-                return 'app', window_title
+                return None, window_title
             except Exception:
                 return None, window_title
 
@@ -149,12 +149,10 @@ class LinuxActivityMonitor:
         return None, None
 
     @staticmethod
+    @staticmethod
     def get_active_window_info():
-        """Get active window name and title on Linux."""
-        # 1. Check MPRIS if actively playing music/media
-        media_player, media_title = LinuxActivityMonitor.get_active_media()
-
-        # 2. Check X11/Xwayland active window via xprop
+        """Get active window name and title on Linux without guessing."""
+        # 1. Check X11/Xwayland active window via xprop
         try:
             root_out = subprocess.check_output(["xprop", "-root", "_NET_ACTIVE_WINDOW"], text=True, stderr=subprocess.DEVNULL)
             m = re.search(r"window id # (0x[0-9a-fA-F]+)", root_out)
@@ -166,7 +164,16 @@ class LinuxActivityMonitor:
                 if sm:
                     ids = [x.strip() for x in sm.group(1).split(",") if x.strip()]
                     if ids:
-                        win_id = ids[-1]
+                        for test_id in reversed(ids):
+                            try:
+                                test_props = subprocess.check_output(["xprop", "-id", test_id, "_NET_WM_NAME", "WM_NAME", "WM_CLASS"], text=True, stderr=subprocess.DEVNULL)
+                                t_m = re.search(r'(?:_NET_WM_NAME|WM_NAME)\([^)]+\)\s*=\s*"([^"]+)"', test_props)
+                                t_val = t_m.group(1) if t_m else ""
+                                if t_val and t_val not in ("hidamari", "Wayland to X Recording bridge", "gnome-shell", "xwaylandvideobridge"):
+                                    win_id = test_id
+                                    break
+                            except Exception:
+                                pass
 
             if win_id:
                 win_props = subprocess.check_output(["xprop", "-id", win_id, "_NET_WM_NAME", "WM_NAME", "WM_CLASS"], text=True, stderr=subprocess.DEVNULL)
@@ -175,41 +182,18 @@ class LinuxActivityMonitor:
                 
                 title = title_m.group(1) if title_m else ""
                 app = class_m.group(2) if class_m else (class_m.group(1) if class_m else "")
-                if title and title not in ("hidamari", "Wayland to X Recording bridge", "gnome-shell"):
+                if title and title not in ("hidamari", "Wayland to X Recording bridge", "gnome-shell", "xwaylandvideobridge"):
                     return app or "App", title
         except Exception:
             pass
 
-        # 3. If media is playing, return media activity
+        # 2. If media is playing, return media activity
+        media_player, media_title = LinuxActivityMonitor.get_active_media()
         if media_player:
             return media_player, media_title
 
-        # 4. Check processes for active IDEs, terminals, browsers
-        try:
-            whoami = subprocess.check_output(["whoami"], text=True, stderr=subprocess.DEVNULL).strip()
-            ps_out = subprocess.check_output(["ps", "-u", whoami, "-o", "comm,args", "--sort=-%cpu"], text=True, stderr=subprocess.DEVNULL)
-            for line in ps_out.splitlines()[1:]:
-                l = line.lower()
-                if "antigravity" in l:
-                    return "antigravity", "Antigravity IDE — Agentic Coding"
-                if "/code" in l or "code --" in l:
-                    return "vscode", "Visual Studio Code"
-                if "cursor" in l:
-                    return "cursor", "Cursor AI Editor"
-                if "brave" in l:
-                    return "brave", "Brave Browser"
-                if "chrome" in l:
-                    return "chrome", "Google Chrome"
-                if "firefox" in l:
-                    return "firefox", "Mozilla Firefox"
-                if "claude" in l:
-                    return "claude", "Claude Desktop"
-                if "spotify" in l:
-                    return "spotify", "Spotify Music"
-        except Exception:
-            pass
-
-        return "System", "Desktop Workspace"
+        # No active application or media - do not guess
+        return None, None
 
 
 class MacOSActivityMonitor:
@@ -221,13 +205,13 @@ class MacOSActivityMonitor:
             cmd = ['osascript', '-e', 'tell application "System Events" to get {name, title} of first application process whose frontmost is true']
             out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
             parts = out.strip().split(', ')
-            if parts:
+            if parts and parts[0]:
                 app = parts[0]
                 title = parts[1] if len(parts) > 1 else app
                 return app, title
         except Exception:
             pass
-        return "macOS", "Desktop"
+        return None, None
 
     @staticmethod
     def get_idle_duration():
@@ -309,7 +293,7 @@ class ActivityMonitor:
                     app_name, window_title = MacOSActivityMonitor.get_active_window_info()
                     idle_sec = MacOSActivityMonitor.get_idle_duration()
                 else:
-                    app_name, window_title = 'System', 'Workspace'
+                    app_name, window_title = None, None
                     idle_sec = 0
 
                 is_user_active = idle_sec < KEYBOARD_TIMEOUT
@@ -351,6 +335,11 @@ class ActivityMonitor:
                     # Reset keyboard active flag if idle for too long
                     if time.time() - self.last_keyboard_activity > KEYBOARD_TIMEOUT:
                         self.keyboard_active = False
+                else:
+                    # Machine is idle or no active window: finalize ongoing session
+                    if self.current_activity:
+                        self._save_activity_session()
+                        self.current_activity = None
 
                 time.sleep(MONITOR_INTERVAL)
 

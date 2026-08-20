@@ -54,12 +54,8 @@ class ActivityDetector:
                 confidence = 0.75
                 return 'other', app_display, confidence
 
-        # Heuristic: if keyboard is active and it's not known, assume coding
-        if keyboard_active:
-            return 'coding', app_name, 0.5
-
-        # Default to other
-        return 'other', app_name, 0.3
+        # Default to other without guessing
+        return 'other', app_name, 1.0
 
     def refine_detection(self, app_name, window_title, keyboard_active, 
                         previous_category=None, time_since_last_activity=0):
