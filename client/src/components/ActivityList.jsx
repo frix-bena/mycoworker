@@ -14,9 +14,9 @@ import {
   formatDuration, 
   formatDate, 
   formatTime, 
-  getCategoryInfo, 
-  getAppIconEmoji 
+  getCategoryInfo 
 } from '../utils/formatters';
+import AppIcon from './AppIcon';
 
 export default function ActivityList({
   activities,
@@ -111,11 +111,11 @@ export default function ActivityList({
                       </div>
                     </td>
 
-                    {/* App name with icon */}
+                    {/* App name with real icon */}
                     <td className="py-3">
-                      <div className="flex items-center gap-1.5 font-medium text-slate-300">
-                        <span>{getAppIconEmoji(act.appName)}</span>
-                        <span>{act.appName}</span>
+                      <div className="flex items-center gap-2 font-medium text-slate-200">
+                        <AppIcon appName={act.appName} category={act.category} size="sm" />
+                        <span className="truncate max-w-[150px]">{act.appName}</span>
                       </div>
                     </td>
 

@@ -7,6 +7,7 @@ import { db } from './db.js';
 import activitiesRouter from './routes/activities.js';
 import statsRouter from './routes/stats.js';
 import trackerRouter from './routes/tracker.js';
+import iconsRouter from './routes/icons.js';
 import { machineTracker } from './machineTracker.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,6 +25,7 @@ app.use(morgan('dev'));
 app.use('/api/activities', activitiesRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/tracker', trackerRouter);
+app.use('/api/icons', iconsRouter);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {

@@ -11,6 +11,7 @@ import {
   Tag
 } from 'lucide-react';
 import { formatDigitalTimer } from '../utils/formatters';
+import AppIcon from './AppIcon';
 
 const QUICK_APPS = [
   { name: 'VS Code', cat: 'coding' },
@@ -144,13 +145,18 @@ export default function LiveTimer({
               <label className="block text-[11px] font-medium text-slate-400 mb-1">
                 Application Name
               </label>
-              <input
-                type="text"
-                value={appName}
-                onChange={(e) => setAppName(e.target.value)}
-                placeholder="e.g. VS Code, Spotify"
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500/50"
-              />
+              <div className="relative flex items-center">
+                <div className="absolute left-2.5 pointer-events-none">
+                  <AppIcon appName={appName} category={category} size="xs" />
+                </div>
+                <input
+                  type="text"
+                  value={appName}
+                  onChange={(e) => setAppName(e.target.value)}
+                  placeholder="e.g. VS Code, Spotify"
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-sky-500/50"
+                />
+              </div>
             </div>
 
             <div>
@@ -180,13 +186,14 @@ export default function LiveTimer({
                   key={app.name}
                   type="button"
                   onClick={() => handleQuickAppSelect(app)}
-                  className={`px-2 py-0.5 rounded-lg text-[11px] transition-colors border ${
+                  className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[11px] transition-colors border ${
                     appName === app.name
                       ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 font-medium'
                       : 'bg-slate-900 text-slate-400 hover:text-slate-200 border-slate-800'
                   }`}
                 >
-                  {app.name}
+                  <AppIcon appName={app.name} category={app.cat} size="xs" />
+                  <span>{app.name}</span>
                 </button>
               ))}
             </div>

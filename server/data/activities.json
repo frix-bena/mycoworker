@@ -1,5 +1,29 @@
 [
   {
+    "id": "89632c38-5382-4024-a254-659281deb30f",
+    "title": "Claude",
+    "appName": "Claude",
+    "category": "work",
+    "duration": 51,
+    "startTime": "2026-08-20T17:00:19.982Z",
+    "endTime": "2026-08-20T17:01:10.975Z",
+    "notes": "Background Music: Migos, Gucci Mane - Slippery (feat. Gucci Mane)",
+    "createdAt": "2026-08-20T17:00:19.983Z",
+    "updatedAt": "2026-08-20T17:01:10.975Z"
+  },
+  {
+    "id": "89539c27-d35b-40f4-8bab-48ee51e203f3",
+    "title": "Claude",
+    "appName": "Claude",
+    "category": "work",
+    "duration": 81,
+    "startTime": "2026-08-20T16:38:20.572Z",
+    "endTime": "2026-08-20T16:39:41.746Z",
+    "notes": "Background Music: Wiz Khalifa, Charlie Puth - See You Again (feat. Charlie Puth)",
+    "createdAt": "2026-08-20T16:38:20.573Z",
+    "updatedAt": "2026-08-20T16:39:41.747Z"
+  },
+  {
     "id": "d0331832-3529-40ff-a987-581431f4a1b0",
     "title": "Claude",
     "appName": "Claude",

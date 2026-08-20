@@ -1,6 +1,7 @@
 import React from 'react';
 import { Monitor, Layers } from 'lucide-react';
-import { formatDuration, getCategoryInfo, getAppIconEmoji } from '../utils/formatters';
+import { formatDuration, getCategoryInfo } from '../utils/formatters';
+import AppIcon from './AppIcon';
 
 export default function TopAppsTable({ topApps }) {
   if (!topApps || topApps.length === 0) {
@@ -55,9 +56,9 @@ export default function TopAppsTable({ topApps }) {
                     {isFirst ? '👑' : `#${idx + 1}`}
                   </td>
                   <td className="py-2.5">
-                    <div className="flex items-center gap-2 font-medium text-slate-200">
-                      <span>{getAppIconEmoji(app.name)}</span>
-                      <span>{app.name}</span>
+                    <div className="flex items-center gap-2.5 font-medium text-slate-200">
+                      <AppIcon appName={app.name} category={app.category} size="sm" />
+                      <span className="truncate">{app.name}</span>
                     </div>
                   </td>
                   <td className="py-2.5">

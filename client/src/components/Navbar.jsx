@@ -9,6 +9,7 @@ import {
   Trash2,
   Sparkles
 } from 'lucide-react';
+import AppIcon from './AppIcon';
 
 export default function Navbar({ 
   onOpenAddModal, 
@@ -54,16 +55,21 @@ export default function Navbar({
                 <span className={`w-2 h-2 rounded-full ${
                   !isTracking ? 'bg-slate-500' : isIdle ? 'bg-amber-400' : 'bg-emerald-400 live-indicator'
                 }`}></span>
-                <span className={
+                <span className={`flex items-center gap-1.5 ${
                   !isTracking ? 'text-slate-400' : isIdle ? 'text-amber-400 font-medium' : 'text-emerald-400 font-medium'
-                }>
-                  {!isTracking 
-                    ? 'Tracker Paused' 
-                    : isIdle 
-                    ? 'Machine Idle' 
-                    : currentApp 
-                    ? `Live: ${currentApp}` 
-                    : 'Active (No App Focused)'}
+                }`}>
+                  {isTracking && !isIdle && currentApp && (
+                    <AppIcon appName={currentApp} size="xs" />
+                  )}
+                  <span>
+                    {!isTracking 
+                      ? 'Tracker Paused' 
+                      : isIdle 
+                      ? 'Machine Idle' 
+                      : currentApp 
+                      ? `Live: ${currentApp}` 
+                      : 'Active (No App Focused)'}
+                  </span>
                 </span>
               </span>
               <span>•</span>

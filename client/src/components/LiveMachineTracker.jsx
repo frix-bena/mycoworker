@@ -17,6 +17,7 @@ import {
   Zap
 } from 'lucide-react';
 import { formatDuration } from '../utils/formatters';
+import AppIcon from './AppIcon';
 
 export default function LiveMachineTracker({ 
   trackerStatus, 
@@ -116,13 +117,25 @@ export default function LiveMachineTracker({
         {/* Left column: Live indicator, App details, current task */}
         <div className="flex items-start sm:items-center gap-3.5 flex-1 min-w-0">
           
-          {/* Animated App / Category Icon */}
-          <div className={`relative p-3.5 rounded-2xl ${catConfig.bg} border ${catConfig.border} flex-shrink-0 shadow-md`}>
-            <CatIcon className={`w-6 h-6 ${catConfig.color}`} />
+          {/* Real Animated App Icon */}
+          <div className="relative flex-shrink-0">
+            {currentAct?.appName || (media && media.isPlaying) ? (
+              <div className="p-1 rounded-2xl bg-slate-800/80 border border-slate-700/80 shadow-lg">
+                <AppIcon
+                  appName={currentAct?.appName || media?.player}
+                  category={currentAct?.category}
+                  size="xl"
+                />
+              </div>
+            ) : (
+              <div className={`p-3 rounded-2xl ${catConfig.bg} border ${catConfig.border} shadow-md`}>
+                <CatIcon className={`w-6 h-6 ${catConfig.color}`} />
+              </div>
+            )}
             {isTracking && !isIdle && (
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-cyan-500 ring-2 ring-[#0c1427]"></span>
               </span>
             )}
           </div>
