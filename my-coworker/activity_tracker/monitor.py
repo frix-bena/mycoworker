@@ -150,6 +150,51 @@ class LinuxActivityMonitor:
 
     @staticmethod
     @staticmethod
+    def get_active_ide_info():
+        """Detect running IDEs on Linux (GNOME/Wayland/X11) from process state and workspaces."""
+        ide_keys = {
+            'antigravity': 'Antigravity',
+            'code': 'Visual Studio Code',
+            'cursor': 'Cursor',
+            'windsurf': 'Windsurf',
+            'positron': 'Positron',
+            'zed': 'Zed',
+            'pycharm': 'PyCharm',
+            'idea': 'IntelliJ IDEA',
+            'webstorm': 'WebStorm',
+            'clion': 'CLion',
+            'rider': 'JetBrains Rider',
+            'goland': 'GoLand',
+            'studio': 'Android Studio',
+            'sublime': 'Sublime Text',
+            'nvim': 'Neovim',
+            'vim': 'Vim',
+            'emacs': 'Emacs'
+        }
+        try:
+            out = subprocess.check_output(["ps", "-eo", "pid,ppid,args", "--no-headers"], text=True, stderr=subprocess.DEVNULL)
+            for line in out.splitlines():
+                line_lower = line.lower()
+                if "grep" in line_lower:
+                    continue
+                for key, name in ide_keys.items():
+                    if key in line_lower or f"/{key}" in line_lower:
+                        m = re.match(r"^\s*(\d+)", line)
+                        if m:
+                            pid = m.group(1)
+                            try:
+                                cwd = os.readlink(f"/proc/{pid}/cwd")
+                                if cwd and cwd not in ("/", os.path.expanduser("~")) and not cwd.startswith("/proc"):
+                                    proj_name = os.path.basename(cwd)
+                                    return name, f"{proj_name} (Active Workspace)"
+                            except Exception:
+                                pass
+                            return name, f"{name} Workspace"
+        except Exception:
+            pass
+        return None, None
+
+    @staticmethod
     def get_active_window_info():
         """Get active window name and title on Linux without guessing."""
         # 1. Check X11/Xwayland active window via xprop
@@ -187,12 +232,17 @@ class LinuxActivityMonitor:
         except Exception:
             pass
 
-        # 2. If media is playing, return media activity
+        # 2. Check running IDEs on Wayland / host
+        ide_app, ide_title = LinuxActivityMonitor.get_active_ide_info()
+        if ide_app:
+            return ide_app, ide_title
+
+        # 3. If media is playing, return media activity
         media_player, media_title = LinuxActivityMonitor.get_active_media()
         if media_player:
             return media_player, media_title
 
-        # No active application or media - do not guess
+        # No active application or media
         return None, None
 
 

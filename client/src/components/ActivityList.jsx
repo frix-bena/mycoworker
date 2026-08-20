@@ -109,6 +109,20 @@ export default function ActivityList({
                       <div className="font-semibold text-slate-200 max-w-xs truncate">
                         {act.title}
                       </div>
+                      {(act.workspace || act.gitBranch) && (
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-slate-400">
+                          {act.workspace && (
+                            <span className="text-sky-300 font-medium truncate max-w-[120px]">
+                              📁 {act.workspace}
+                            </span>
+                          )}
+                          {act.gitBranch && (
+                            <span className="font-mono text-emerald-400">
+                              🌿 {act.gitBranch}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
 
                     {/* App name with real icon */}

@@ -14,7 +14,12 @@ import {
   Volume2,
   Moon,
   CheckCircle,
-  Zap
+  Zap,
+  FolderGit2,
+  FileCode,
+  GitBranch,
+  Terminal,
+  Layers
 } from 'lucide-react';
 import { formatDuration } from '../utils/formatters';
 import AppIcon from './AppIcon';
@@ -33,6 +38,8 @@ export default function LiveMachineTracker({
   const isIdle = trackerStatus?.isIdle ?? false;
   const idleSecs = trackerStatus?.idleSeconds ?? 0;
   const platform = trackerStatus?.platform || 'linux';
+  const activeIDEs = trackerStatus?.activeIDEs || [];
+  const primaryIDE = trackerStatus?.primaryActiveIDE;
 
   // Local ticker for live active duration
   useEffect(() => {
@@ -105,13 +112,16 @@ export default function LiveMachineTracker({
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
+  const isCoding = currentAct?.category === 'coding' || activeIDEs.some(ide => ide.isActive);
+
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900/95 via-[#0c1427]/95 to-slate-900/95 border border-cyan-500/20 p-4 sm:p-5 shadow-xl backdrop-blur-md">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900/95 via-[#0c1427]/95 to-slate-900/95 border border-cyan-500/20 p-4 sm:p-5 shadow-xl backdrop-blur-md space-y-4">
       
       {/* Background glow effects */}
       <div className="absolute top-0 right-1/4 w-64 h-24 bg-cyan-500/10 blur-3xl pointer-events-none -z-10 rounded-full" />
       <div className="absolute bottom-0 left-1/3 w-72 h-20 bg-indigo-500/10 blur-3xl pointer-events-none -z-10 rounded-full" />
 
+      {/* Main Top Header: Current Active Foreground App */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         
         {/* Left column: Live indicator, App details, current task */}
@@ -153,7 +163,7 @@ export default function LiveMachineTracker({
                   ) : (
                     <>
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-emerald-300">Live Machine Tracking</span>
+                      <span className="text-emerald-300">Live Activity Tracking</span>
                     </>
                   )
                 ) : (
@@ -168,6 +178,20 @@ export default function LiveMachineTracker({
                 {catConfig.label}
               </span>
 
+              {currentAct?.workspace && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-300 border border-sky-500/20">
+                  <FolderGit2 className="w-3 h-3 text-sky-400" />
+                  <span>{currentAct.workspace}</span>
+                </span>
+              )}
+
+              {currentAct?.gitBranch && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                  <GitBranch className="w-3 h-3 text-emerald-400" />
+                  <span>{currentAct.gitBranch}</span>
+                </span>
+              )}
+
               <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
                 Host: <span className="text-slate-300 uppercase">{platform}</span>
               </span>
@@ -176,12 +200,12 @@ export default function LiveMachineTracker({
             {/* Application Name & Active Window Title */}
             <div className="flex items-center gap-2">
               <h2 className="text-base sm:text-lg font-bold text-slate-100 truncate tracking-tight">
-                {currentAct ? currentAct.appName : (isIdle ? 'Machine Idle' : 'No Active Foreground Window')}
+                {currentAct ? currentAct.appName : (isIdle ? 'Machine Idle' : 'Monitoring Host Activity')}
               </h2>
             </div>
             
             <p className="text-xs text-slate-400 truncate max-w-2xl font-normal mt-0.5">
-              {currentAct?.title || (isIdle ? 'No user input detected on machine' : 'Tracking real-time foreground application and active media only')}
+              {currentAct?.title || (isIdle ? 'No user input detected on machine' : 'Real-time IDE & application activity introspection active')}
             </p>
 
             {/* Rich notes / Media banner */}
@@ -259,6 +283,75 @@ export default function LiveMachineTracker({
         </div>
 
       </div>
+
+      {/* Active IDEs on Activity Panel */}
+      {activeIDEs.length > 0 && (
+        <div className="pt-3 border-t border-slate-800/80">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <Code2 className="w-3.5 h-3.5 text-sky-400" />
+              <span>IDEs on Activity ({activeIDEs.length})</span>
+            </div>
+            <span className="text-[11px] text-slate-500 font-mono">
+              Live Workspaces & Process Status
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            {activeIDEs.map((ide) => {
+              const isCurrentFocused = ide.isActive || currentAct?.appName === ide.name;
+              return (
+                <div
+                  key={ide.name}
+                  className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all ${
+                    isCurrentFocused
+                      ? 'bg-sky-500/10 border-sky-500/30 shadow-sm ring-1 ring-sky-500/20'
+                      : 'bg-slate-800/40 border-slate-800 hover:bg-slate-800/70'
+                  }`}
+                >
+                  <AppIcon appName={ide.name} category="coding" size="md" />
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-xs font-bold text-slate-200 truncate">
+                        {ide.name}
+                      </span>
+                      {isCurrentFocused ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>Active</span>
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          {ide.processCount} proc
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-400 truncate">
+                      {ide.currentWorkspace ? (
+                        <span className="truncate text-sky-300 font-medium flex items-center gap-1">
+                          <FolderGit2 className="w-3 h-3 text-sky-400 flex-shrink-0" />
+                          <span>{ide.currentWorkspace}</span>
+                        </span>
+                      ) : (
+                        <span className="italic text-slate-500">General Workspace</span>
+                      )}
+
+                      {ide.gitBranch && (
+                        <span className="text-slate-400 font-mono text-[10px] flex items-center gap-0.5">
+                          <GitBranch className="w-2.5 h-2.5 text-emerald-400" />
+                          <span>{ide.gitBranch}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
     </div>
   );

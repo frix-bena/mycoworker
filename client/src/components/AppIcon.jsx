@@ -398,13 +398,106 @@ const BRAND_SVGS = {
     </svg>
   ),
 
+  webstorm: () => (
+    <svg viewBox="0 0 256 256" className="w-full h-full" fill="none">
+      <rect width="256" height="256" rx="56" fill="#00CDD7"/>
+      <rect x="36" y="36" width="184" height="184" rx="28" fill="#000000"/>
+      <path d="M36 36h80v80H36z" fill="#00CDD7"/>
+      <path d="M140 140h80v80h-80z" fill="#087CFA"/>
+      <text x="56" y="136" fill="#ffffff" fontFamily="monospace" fontWeight="900" fontSize="54">WS</text>
+      <rect x="56" y="160" width="70" height="10" fill="#00CDD7"/>
+    </svg>
+  ),
+
+  clion: () => (
+    <svg viewBox="0 0 256 256" className="w-full h-full" fill="none">
+      <rect width="256" height="256" rx="56" fill="#21D789"/>
+      <rect x="36" y="36" width="184" height="184" rx="28" fill="#000000"/>
+      <path d="M36 36h80v80H36z" fill="#21D789"/>
+      <path d="M140 140h80v80h-80z" fill="#087CFA"/>
+      <text x="60" y="136" fill="#ffffff" fontFamily="monospace" fontWeight="900" fontSize="54">CL</text>
+      <rect x="56" y="160" width="70" height="10" fill="#21D789"/>
+    </svg>
+  ),
+
+  rider: () => (
+    <svg viewBox="0 0 256 256" className="w-full h-full" fill="none">
+      <rect width="256" height="256" rx="56" fill="#C4133A"/>
+      <rect x="36" y="36" width="184" height="184" rx="28" fill="#000000"/>
+      <path d="M36 36h80v80H36z" fill="#C4133A"/>
+      <path d="M140 140h80v80h-80z" fill="#FE2857"/>
+      <text x="60" y="136" fill="#ffffff" fontFamily="monospace" fontWeight="900" fontSize="54">RD</text>
+      <rect x="56" y="160" width="70" height="10" fill="#C4133A"/>
+    </svg>
+  ),
+
+  goland: () => (
+    <svg viewBox="0 0 256 256" className="w-full h-full" fill="none">
+      <rect width="256" height="256" rx="56" fill="#00ADD8"/>
+      <rect x="36" y="36" width="184" height="184" rx="28" fill="#000000"/>
+      <path d="M36 36h80v80H36z" fill="#00ADD8"/>
+      <path d="M140 140h80v80h-80z" fill="#21D789"/>
+      <text x="60" y="136" fill="#ffffff" fontFamily="monospace" fontWeight="900" fontSize="54">GO</text>
+      <rect x="56" y="160" width="70" height="10" fill="#00ADD8"/>
+    </svg>
+  ),
+
+  androidstudio: () => (
+    <svg viewBox="0 0 256 256" className="w-full h-full" fill="none">
+      <rect width="256" height="256" rx="56" fill="#3DDC84"/>
+      <circle cx="128" cy="128" r="76" fill="#ffffff"/>
+      <path d="M96 112a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm64 0a8 8 0 1 0 0-16 8 8 0 0 0 0 16z" fill="#3DDC84"/>
+      <path d="M128 80c-26.5 0-48 21.5-48 48h96c0-26.5-21.5-48-48-48zm-28-20l-12-16a4 4 0 0 0-6 5l12 16a50 50 0 0 1 6-5zm56 0a50 50 0 0 1 6 5l12-16a4 4 0 0 0-6-5l-12 16z" fill="#3DDC84"/>
+    </svg>
+  ),
+
+  zed: () => (
+    <svg viewBox="0 0 256 256" className="w-full h-full" fill="none">
+      <rect width="256" height="256" rx="56" fill="#0a0a0c"/>
+      <path d="M68 64h120l-88 128h92" stroke="#38bdf8" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M68 64l88 128" stroke="#818cf8" strokeWidth="18" strokeLinecap="round"/>
+    </svg>
+  ),
+
+  windsurf: () => (
+    <svg viewBox="0 0 256 256" className="w-full h-full" fill="none">
+      <defs>
+        <linearGradient id="windsurf_grad" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#0284c7"/>
+          <stop offset="0.5" stopColor="#06b6d4"/>
+          <stop offset="1" stopColor="#3b82f6"/>
+        </linearGradient>
+      </defs>
+      <rect width="256" height="256" rx="56" fill="#030712"/>
+      <path d="M64 168c24-40 60-72 108-88-28 40-36 76-24 104-28-4-56-8-84-16z" fill="url(#windsurf_grad)"/>
+      <path d="M104 64c32 16 64 48 88 100-36-8-64-32-88-100z" fill="#38bdf8" opacity="0.8"/>
+    </svg>
+  ),
+
+  positron: () => (
+    <svg viewBox="0 0 256 256" className="w-full h-full" fill="none">
+      <rect width="256" height="256" rx="56" fill="#1e1b4b"/>
+      <ellipse cx="128" cy="128" rx="72" ry="28" stroke="#a855f7" strokeWidth="10" transform="rotate(-30 128 128)"/>
+      <ellipse cx="128" cy="128" rx="72" ry="28" stroke="#38bdf8" strokeWidth="10" transform="rotate(30 128 128)"/>
+      <circle cx="128" cy="128" r="20" fill="#f59e0b"/>
+    </svg>
+  ),
+
   sublime: () => (
     <svg viewBox="0 0 256 256" className="w-full h-full" fill="none">
       <rect width="256" height="256" rx="56" fill="#27272a"/>
-      {/* Sublime Orange Ribbon */}
       <polygon points="60,70 196,110 196,140 60,100" fill="#ff9800"/>
       <polygon points="60,120 196,160 196,190 60,150" fill="#ff5722"/>
       <polygon points="60,170 196,210 196,220 60,180" fill="#e64a19"/>
+    </svg>
+  ),
+
+  neovim: () => (
+    <svg viewBox="0 0 256 256" className="w-full h-full" fill="none">
+      <rect width="256" height="256" rx="56" fill="#0f172a"/>
+      <polygon points="56,48 104,48 104,208 56,208" fill="#16a34a"/>
+      <polygon points="152,48 200,48 200,208 152,208" fill="#0284c7"/>
+      <polygon points="56,48 104,48 200,208 152,208" fill="#22c55e"/>
     </svg>
   ),
 
@@ -414,6 +507,35 @@ const BRAND_SVGS = {
       <polygon points="48,48 108,48 208,188 148,188" fill="#ffffff"/>
       <polygon points="148,48 208,48 108,208 48,208" fill="#007acc"/>
       <text x="76" y="152" fill="#000000" fontFamily="sans-serif" fontWeight="900" fontSize="76">V</text>
+    </svg>
+  ),
+
+  emacs: () => (
+    <svg viewBox="0 0 256 256" className="w-full h-full" fill="none">
+      <defs>
+        <linearGradient id="emacs_grad" x1="0" y1="0" x2="256" y2="256" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#412991"/>
+          <stop offset="1" stopColor="#7F5AB6"/>
+        </linearGradient>
+      </defs>
+      <rect width="256" height="256" rx="56" fill="url(#emacs_grad)"/>
+      <ellipse cx="128" cy="128" rx="80" ry="48" stroke="#ffffff" strokeWidth="12" fill="none" transform="rotate(-25 128 128)"/>
+      <path d="M104 116c0-12 10-20 24-20 18 0 28 12 28 28 0 24-28 36-40 48h44v16H96v-16c14-14 36-24 36-36 0-8-6-12-14-12-8 0-14 4-14 12h-16z" fill="#ffffff"/>
+    </svg>
+  ),
+
+  git: () => (
+    <svg viewBox="0 0 256 256" className="w-full h-full" fill="none">
+      <rect width="256" height="256" rx="56" fill="#F05032"/>
+      {/* Git Rhombus & Branch Line */}
+      <g transform="translate(128, 128) rotate(45) translate(-64, -64)">
+        <rect x="0" y="0" width="128" height="128" rx="16" fill="#F05032" stroke="#ffffff" strokeWidth="8"/>
+        <circle cx="36" cy="64" r="14" fill="#ffffff"/>
+        <circle cx="92" cy="64" r="14" fill="#ffffff"/>
+        <circle cx="92" cy="32" r="14" fill="#ffffff"/>
+        <line x1="36" y1="64" x2="92" y2="64" stroke="#ffffff" strokeWidth="8"/>
+        <line x1="92" y1="32" x2="92" y2="64" stroke="#ffffff" strokeWidth="8"/>
+      </g>
     </svg>
   ),
 
@@ -461,8 +583,24 @@ export function getAppIconKey(appName = '') {
   const n = appName.toLowerCase().trim();
 
   if (n.includes('antigravity')) return 'antigravity';
-  if (n.includes('vscode') || n.includes('visual studio code') || n === 'code' || n.includes('code - oss')) return 'vscode';
+  if (n.includes('vscode') || n.includes('visual studio code') || n === 'code' || n.includes('code - oss') || n.includes('vscodium')) return 'vscode';
   if (n.includes('cursor')) return 'cursor';
+  if (n.includes('windsurf')) return 'windsurf';
+  if (n.includes('positron')) return 'positron';
+  if (n.includes('zed')) return 'zed';
+  if (n.includes('pycharm')) return 'pycharm';
+  if (n.includes('intellij') || n.includes('idea')) return 'intellij';
+  if (n.includes('webstorm')) return 'webstorm';
+  if (n.includes('clion')) return 'clion';
+  if (n.includes('rider')) return 'rider';
+  if (n.includes('goland')) return 'goland';
+  if (n.includes('android studio') || n.includes('androidstudio') || n.includes('studio64')) return 'androidstudio';
+  if (n.includes('sublime')) return 'sublime';
+  if (n.includes('neovim') || n.includes('nvim')) return 'neovim';
+  if (n.includes('vim') || n.includes('gvim')) return 'vim';
+  if (n.includes('emacs')) return 'emacs';
+  if (n.includes('gitkraken') || n.includes('sourcetree') || n === 'git') return 'git';
+
   if (n.includes('claude')) return 'claude';
   if (n.includes('chatgpt') || n.includes('openai')) return 'chatgpt';
   if (n.includes('gemini') || n.includes('bard')) return 'gemini';
@@ -494,10 +632,6 @@ export function getAppIconKey(appName = '') {
   if (n.includes('postman')) return 'postman';
 
   if (n.includes('terminal') || n.includes('ptyxis') || n.includes('bash') || n.includes('zsh') || n.includes('kitty') || n.includes('alacritty') || n.includes('wezterm') || n.includes('iterm')) return 'terminal';
-  if (n.includes('pycharm')) return 'pycharm';
-  if (n.includes('intellij')) return 'intellij';
-  if (n.includes('sublime')) return 'sublime';
-  if (n.includes('vim') || n.includes('neovim')) return 'vim';
 
   if (n.includes('photoshop')) return 'photoshop';
   if (n.includes('illustrator')) return 'illustrator';

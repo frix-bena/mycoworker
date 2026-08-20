@@ -19,29 +19,76 @@ export const CATEGORIES = {
 
 // Common apps mapped to categories
 export const APP_CATEGORY_MAP = {
+  // IDEs & Code Editors
   'antigravity': 'coding',
+  'antigravity ide': 'coding',
   'vscode': 'coding',
   'visual studio code': 'coding',
   'code': 'coding',
+  'code-oss': 'coding',
+  'vscodium': 'coding',
   'cursor': 'coding',
+  'windsurf': 'coding',
+  'positron': 'coding',
   'zed': 'coding',
+  'zed-editor': 'coding',
   'pycharm': 'coding',
   'intellij': 'coding',
+  'intellij idea': 'coding',
+  'idea': 'coding',
+  'webstorm': 'coding',
+  'clion': 'coding',
+  'rider': 'coding',
+  'jetbrains rider': 'coding',
+  'goland': 'coding',
+  'android studio': 'coding',
+  'androidstudio': 'coding',
+  'phpstorm': 'coding',
+  'rubymine': 'coding',
+  'rustrover': 'coding',
+  'datagrip': 'coding',
+  'fleet': 'coding',
   'sublime text': 'coding',
+  'sublime': 'coding',
   'neovim': 'coding',
+  'nvim': 'coding',
   'vim': 'coding',
+  'gvim': 'coding',
+  'macvim': 'coding',
   'emacs': 'coding',
+  'emacsclient': 'coding',
+  'eclipse': 'coding',
+  'netbeans': 'coding',
+  'devenv': 'coding',
+  'visual studio': 'coding',
+  'xcode': 'coding',
+  'helix': 'coding',
+  'kate': 'coding',
+
+  // Terminal & Shells
   'terminal': 'coding',
   'ptyxis': 'coding',
   'alacritty': 'coding',
   'kitty': 'coding',
   'wezterm': 'coding',
   'iterm': 'coding',
+  'iterm2': 'coding',
+  'hyper': 'coding',
+  'warp': 'coding',
   'bash': 'coding',
   'zsh': 'coding',
+  'fish': 'coding',
+  'tmux': 'coding',
   'git': 'coding',
   'github desktop': 'coding',
+  'gitkraken': 'coding',
+  'sourcetree': 'coding',
+  'postman': 'coding',
+  'insomnia': 'coding',
+  'docker': 'coding',
+  'docker desktop': 'coding',
   
+  // Music & Media
   'spotify': 'music',
   'apple music': 'music',
   'youtube music': 'music',
@@ -52,32 +99,76 @@ export const APP_CATEGORY_MAP = {
   'soundcloud': 'music',
   'tidal': 'music',
   'deezer': 'music',
+  'winamp': 'music',
+  'foobar2000': 'music',
+  'musicbee': 'music',
+  'itunes': 'music',
   'podcast': 'music',
   'audible': 'music',
 
+  // Browsers & Research
   'chrome': 'work',
   'google chrome': 'work',
   'firefox': 'work',
   'brave': 'work',
   'zen': 'work',
+  'safari': 'work',
+  'edge': 'work',
+  'microsoft edge': 'work',
   'chromium': 'work',
+  'arc': 'work',
+  'opera': 'work',
+  'vivaldi': 'work',
+
+  // AI & Study
   'claude': 'work',
   'chatgpt': 'study',
   'gemini': 'study',
+  'deepseek': 'study',
+  'perplexity': 'study',
   'obsidian': 'study',
   'notion': 'work',
+  'anki': 'study',
+  'logseq': 'study',
+
+  // Communication & Productivity
   'slack': 'work',
   'discord': 'work',
+  'teams': 'work',
+  'microsoft teams': 'work',
+  'telegram': 'work',
+  'zoom': 'work',
   'figma': 'work',
   'jira': 'work',
-  'zoom': 'work',
-  'teams': 'work'
+  'linear': 'work',
+  'trello': 'work'
 };
 
 export function detectCategory(appName, title = '') {
   const target = `${appName} ${title}`.toLowerCase();
   
-  if (target.includes('github') || target.includes('gitlab') || target.includes('stackoverflow') || target.includes('stack overflow') || target.includes('localhost') || target.includes('127.0.0.1')) {
+  if (
+    target.includes('github') || 
+    target.includes('gitlab') || 
+    target.includes('stackoverflow') || 
+    target.includes('stack overflow') || 
+    target.includes('localhost') || 
+    target.includes('127.0.0.1') ||
+    target.includes('.js') ||
+    target.includes('.jsx') ||
+    target.includes('.ts') ||
+    target.includes('.tsx') ||
+    target.includes('.py') ||
+    target.includes('.rs') ||
+    target.includes('.go') ||
+    target.includes('.cpp') ||
+    target.includes('.c') ||
+    target.includes('.java') ||
+    target.includes('.html') ||
+    target.includes('.css') ||
+    target.includes('workspace') ||
+    target.includes('.json')
+  ) {
     return 'coding';
   }
 
@@ -194,6 +285,10 @@ class ActivityStore {
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
       notes: data.notes ? data.notes.trim() : '',
+      workspace: data.workspace ? data.workspace.trim() : null,
+      gitBranch: data.gitBranch ? data.gitBranch.trim() : null,
+      file: data.file ? data.file.trim() : null,
+      ideName: data.ideName ? data.ideName.trim() : (category === 'coding' ? (data.appName || null) : null),
       createdAt: now.toISOString()
     };
 
@@ -222,6 +317,10 @@ class ActivityStore {
       startTime,
       endTime,
       notes: data.notes !== undefined ? data.notes.trim() : existing.notes,
+      workspace: data.workspace !== undefined ? (data.workspace ? data.workspace.trim() : null) : existing.workspace,
+      gitBranch: data.gitBranch !== undefined ? (data.gitBranch ? data.gitBranch.trim() : null) : existing.gitBranch,
+      file: data.file !== undefined ? (data.file ? data.file.trim() : null) : existing.file,
+      ideName: data.ideName !== undefined ? (data.ideName ? data.ideName.trim() : null) : existing.ideName,
       updatedAt: new Date().toISOString()
     };
 
@@ -267,6 +366,10 @@ class ActivityStore {
 
     // App totals
     const appMap = new Map();
+
+    // IDE breakdown & Workspace breakdown
+    const ideMap = new Map();
+    const workspaceMap = new Map();
 
     // Hourly buckets (00:00 - 23:00)
     const hourlyMap = Array.from({ length: 24 }, (_, i) => ({
@@ -337,6 +440,28 @@ class ActivityStore {
       appEntry.duration += dur;
       appEntry.count += 1;
 
+      // IDE & Coding Breakdown
+      if (cat === 'coding') {
+        const ideName = act.ideName || act.appName || 'General IDE';
+        if (!ideMap.has(ideName)) {
+          ideMap.set(ideName, { name: ideName, duration: 0, count: 0 });
+        }
+        const ideEntry = ideMap.get(ideName);
+        ideEntry.duration += dur;
+        ideEntry.count += 1;
+
+        // Workspace breakdown
+        const ws = act.workspace || (act.title && act.title.includes('—') ? act.title.split('—')[0].trim() : 'Default Workspace');
+        if (ws) {
+          if (!workspaceMap.has(ws)) {
+            workspaceMap.set(ws, { name: ws, duration: 0, count: 0, ide: ideName });
+          }
+          const wsEntry = workspaceMap.get(ws);
+          wsEntry.duration += dur;
+          wsEntry.count += 1;
+        }
+      }
+
       // Hourly stats
       const actDate = new Date(act.startTime);
       const hourIndex = actDate.getHours();
@@ -371,6 +496,25 @@ class ActivityStore {
         percentage: totalDuration > 0 ? Math.round((app.duration / totalDuration) * 100) : 0
       }));
 
+    // Format IDE breakdown
+    const codingTotal = categoryTotals.coding || 1;
+    const ideBreakdown = Array.from(ideMap.values())
+      .sort((a, b) => b.duration - a.duration)
+      .map((ide, idx) => ({
+        ...ide,
+        rank: idx + 1,
+        percentage: codingTotal > 0 ? Math.round((ide.duration / codingTotal) * 100) : 0
+      }));
+
+    // Format Workspace breakdown
+    const workspaceBreakdown = Array.from(workspaceMap.values())
+      .sort((a, b) => b.duration - a.duration)
+      .map((ws, idx) => ({
+        ...ws,
+        rank: idx + 1,
+        percentage: codingTotal > 0 ? Math.round((ws.duration / codingTotal) * 100) : 0
+      }));
+
     const numDays = Math.max(1, dailyMap.size);
 
     return {
@@ -381,6 +525,17 @@ class ActivityStore {
       categoryTotals,
       categoryCounts,
       topApps,
+      ideBreakdown,
+      workspaceBreakdown,
+      codingStats: {
+        totalCodingDuration: categoryTotals.coding,
+        totalCodingSessions: categoryCounts.coding,
+        topIde: ideBreakdown[0]?.name || null,
+        topWorkspace: workspaceBreakdown[0]?.name || null,
+        activeProjectsCount: workspaceBreakdown.length,
+        ideBreakdown,
+        workspaceBreakdown
+      },
       hourlyTimeline: hourlyMap,
       dailyTrend: Array.from(dailyMap.values()),
       dateRange: {
@@ -392,10 +547,12 @@ class ActivityStore {
 
   async seedSampleData() {
     const apps = [
-      { name: 'Visual Studio Code', title: 'ActivityTracker.jsx — React Frontend', cat: 'coding', notes: 'Refactored dashboard components and added Chart.js visualizations' },
-      { name: 'Visual Studio Code', title: 'server.js — Express API routes', cat: 'coding', notes: 'Implemented REST endpoints and SQLite/JSON storage layer' },
-      { name: 'Terminal', title: 'npm run dev — node server & vite', cat: 'coding', notes: 'Testing dev script and build outputs' },
-      { name: 'Cursor', title: 'AI code review & debugging', cat: 'coding', notes: 'Checked edge cases on date filtering' },
+      { name: 'Antigravity', title: 'mycowoker — LiveMachineTracker.jsx (main)', cat: 'coding', workspace: 'mycowoker', gitBranch: 'main', file: 'LiveMachineTracker.jsx', notes: 'Integrated real-time IDE activity detection across running editors' },
+      { name: 'Antigravity', title: 'autoscroll — background.js', cat: 'coding', workspace: 'autoscroll', gitBranch: 'master', file: 'background.js', notes: 'Tested Chrome extension auto-scrolling worker' },
+      { name: 'Visual Studio Code', title: 'mycowoker — server.js (main)', cat: 'coding', workspace: 'mycowoker', gitBranch: 'main', file: 'server.js', notes: 'Implemented REST endpoints and SQLite/JSON storage layer' },
+      { name: 'Cursor', title: 'videogenerator — render.py', cat: 'coding', workspace: 'videogenerator', gitBranch: 'main', file: 'render.py', notes: 'Optimized video encoding pipeline and async queue' },
+      { name: 'Terminal', title: 'npm run dev — vite & express', cat: 'coding', workspace: 'mycowoker', gitBranch: 'main', file: 'package.json', notes: 'Testing dev script and build outputs' },
+      { name: 'PyCharm', title: 'activity_tracker — detector.py', cat: 'coding', workspace: 'activity_tracker', gitBranch: 'main', file: 'detector.py', notes: 'AI heuristic pattern classifier' },
       { name: 'Spotify', title: 'Deep Focus — Synthwave & Lofi Beats', cat: 'music', notes: 'Background music while coding' },
       { name: 'YouTube Music', title: 'Chill Coding Playlist', cat: 'music', notes: 'Relaxing playlist during afternoon work session' },
       { name: 'Google Chrome', title: 'MDN Web Docs & StackOverflow', cat: 'work', notes: 'Researched React hooks and Tailwind grid layouts' },
@@ -433,6 +590,10 @@ class ActivityStore {
           duration: durationSecs,
           startTime: startTime.toISOString(),
           endTime: endTime.toISOString(),
+          workspace: app.workspace || null,
+          gitBranch: app.gitBranch || null,
+          file: app.file || null,
+          ideName: app.cat === 'coding' ? app.name : null,
           notes: app.notes,
           createdAt: startTime.toISOString()
         });

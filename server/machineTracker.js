@@ -1,9 +1,187 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import fs from 'fs';
+import path from 'path';
 import os from 'os';
 import { db, detectCategory } from './db.js';
 
 const execAsync = promisify(exec);
+
+// Complete IDE & Code Editor Definitions
+export const IDE_DEFINITIONS = [
+  {
+    key: 'antigravity',
+    name: 'Antigravity',
+    aliases: ['antigravity', 'antigravity-cli', 'cloudcode_cli', 'language_server_linux_x64'],
+    configDirs: [
+      path.join(os.homedir(), '.config/Antigravity'),
+      path.join(os.homedir(), 'Library/Application Support/Antigravity'),
+      path.join(process.env.APPDATA || '', 'Antigravity')
+    ]
+  },
+  {
+    key: 'vscode',
+    name: 'Visual Studio Code',
+    aliases: ['code', 'vscode', 'code-oss', 'vscodium', 'visual studio code'],
+    configDirs: [
+      path.join(os.homedir(), '.config/Code'),
+      path.join(os.homedir(), '.config/VSCodium'),
+      path.join(os.homedir(), 'Library/Application Support/Code'),
+      path.join(process.env.APPDATA || '', 'Code')
+    ]
+  },
+  {
+    key: 'cursor',
+    name: 'Cursor',
+    aliases: ['cursor', 'cursor-server', 'anysphere'],
+    configDirs: [
+      path.join(os.homedir(), '.config/Cursor'),
+      path.join(os.homedir(), 'Library/Application Support/Cursor'),
+      path.join(process.env.APPDATA || '', 'Cursor')
+    ]
+  },
+  {
+    key: 'windsurf',
+    name: 'Windsurf',
+    aliases: ['windsurf', 'codeium'],
+    configDirs: [
+      path.join(os.homedir(), '.config/Windsurf'),
+      path.join(os.homedir(), 'Library/Application Support/Windsurf'),
+      path.join(process.env.APPDATA || '', 'Windsurf')
+    ]
+  },
+  {
+    key: 'positron',
+    name: 'Positron',
+    aliases: ['positron'],
+    configDirs: [
+      path.join(os.homedir(), '.config/Positron'),
+      path.join(os.homedir(), 'Library/Application Support/Positron'),
+      path.join(process.env.APPDATA || '', 'Positron')
+    ]
+  },
+  {
+    key: 'zed',
+    name: 'Zed',
+    aliases: ['zed', 'zed-editor'],
+    configDirs: [
+      path.join(os.homedir(), '.config/zed'),
+      path.join(os.homedir(), 'Library/Application Support/Zed')
+    ]
+  },
+  {
+    key: 'pycharm',
+    name: 'PyCharm',
+    aliases: ['pycharm', 'pycharm64', 'pycharm-community', 'pycharm-professional'],
+    configDirs: [
+      path.join(os.homedir(), '.config/JetBrains'),
+      path.join(os.homedir(), 'Library/Application Support/JetBrains')
+    ]
+  },
+  {
+    key: 'intellij',
+    name: 'IntelliJ IDEA',
+    aliases: ['idea', 'idea64', 'intellij', 'idea-community', 'idea-ultimate'],
+    configDirs: [
+      path.join(os.homedir(), '.config/JetBrains'),
+      path.join(os.homedir(), 'Library/Application Support/JetBrains')
+    ]
+  },
+  {
+    key: 'webstorm',
+    name: 'WebStorm',
+    aliases: ['webstorm', 'webstorm64'],
+    configDirs: [
+      path.join(os.homedir(), '.config/JetBrains'),
+      path.join(os.homedir(), 'Library/Application Support/JetBrains')
+    ]
+  },
+  {
+    key: 'clion',
+    name: 'CLion',
+    aliases: ['clion', 'clion64'],
+    configDirs: [
+      path.join(os.homedir(), '.config/JetBrains'),
+      path.join(os.homedir(), 'Library/Application Support/JetBrains')
+    ]
+  },
+  {
+    key: 'rider',
+    name: 'JetBrains Rider',
+    aliases: ['rider', 'rider64'],
+    configDirs: [
+      path.join(os.homedir(), '.config/JetBrains'),
+      path.join(os.homedir(), 'Library/Application Support/JetBrains')
+    ]
+  },
+  {
+    key: 'goland',
+    name: 'GoLand',
+    aliases: ['goland', 'goland64'],
+    configDirs: [
+      path.join(os.homedir(), '.config/JetBrains'),
+      path.join(os.homedir(), 'Library/Application Support/JetBrains')
+    ]
+  },
+  {
+    key: 'androidstudio',
+    name: 'Android Studio',
+    aliases: ['studio', 'studio64', 'android-studio'],
+    configDirs: [
+      path.join(os.homedir(), '.config/Google/AndroidStudio'),
+      path.join(os.homedir(), 'Library/Application Support/Google/AndroidStudio')
+    ]
+  },
+  {
+    key: 'sublime',
+    name: 'Sublime Text',
+    aliases: ['sublime_text', 'sublime', 'subl'],
+    configDirs: [
+      path.join(os.homedir(), '.config/sublime-text'),
+      path.join(os.homedir(), 'Library/Application Support/Sublime Text')
+    ]
+  },
+  {
+    key: 'neovim',
+    name: 'Neovim',
+    aliases: ['nvim', 'neovim'],
+    configDirs: [path.join(os.homedir(), '.config/nvim')]
+  },
+  {
+    key: 'vim',
+    name: 'Vim',
+    aliases: ['vim', 'gvim', 'mvim'],
+    configDirs: []
+  },
+  {
+    key: 'emacs',
+    name: 'Emacs',
+    aliases: ['emacs', 'emacsclient'],
+    configDirs: [path.join(os.homedir(), '.emacs.d')]
+  }
+];
+
+function getGitBranch(dirPath) {
+  if (!dirPath || typeof dirPath !== 'string') return null;
+  try {
+    const gitHead = path.join(dirPath, '.git', 'HEAD');
+    if (fs.existsSync(gitHead)) {
+      const content = fs.readFileSync(gitHead, 'utf-8').trim();
+      const m = content.match(/^ref: refs\/heads\/(.+)$/);
+      return m ? m[1] : content.slice(0, 7);
+    }
+  } catch (e) {}
+  return null;
+}
+
+function cleanProjectName(folderPath) {
+  if (!folderPath || typeof folderPath !== 'string') return null;
+  const basename = path.basename(folderPath);
+  if (basename && basename !== '.' && basename !== '/') {
+    return basename.replace(/\.code-workspace$/, '');
+  }
+  return folderPath;
+}
 
 export class MachineTracker {
   constructor() {
@@ -14,8 +192,10 @@ export class MachineTracker {
     this.timer = null;
 
     // Current tracking state
-    this.currentActivity = null; // { id, appName, title, category, startTime, lastActiveTime, duration, notes }
+    this.currentActivity = null; // { id, appName, title, category, workspace, gitBranch, file, ideName, duration, notes }
     this.currentMedia = null; // { player, title, artist, album, isPlaying }
+    this.activeIDEs = []; // [{ name, iconKey, isActive, processCount, workspaces, currentWorkspace, currentFile, gitBranch, lastActiveSecs }]
+    this.primaryActiveIDE = null;
     this.lastIdleSeconds = 0;
     this.isIdle = false;
     this.lastPollTime = null;
@@ -28,7 +208,7 @@ export class MachineTracker {
   start() {
     if (this.timer) return;
     this.isTracking = true;
-    console.log(`[MachineTracker] Started realistic machine activity tracker on ${this.platform} (interval: ${this.pollIntervalMs}ms)`);
+    console.log(`[MachineTracker] Started realistic machine & IDE activity tracker on ${this.platform} (interval: ${this.pollIntervalMs}ms)`);
     
     // Initial immediate probe
     this.poll();
@@ -86,6 +266,230 @@ export class MachineTracker {
     }
   }
 
+  /**
+   * Introspects running processes and config states to detect all active IDEs
+   */
+  async _inspectRunningIDEs() {
+    const detectedIDEs = new Map();
+    const now = Date.now();
+
+    // 1. Inspect running processes via ps
+    let psLines = [];
+    try {
+      const { stdout } = await execAsync('ps -eo pid,ppid,args --no-headers');
+      psLines = stdout.split('\n').filter(Boolean);
+    } catch (e) {}
+
+    // Check active pts devices (terminals) modified in the last 60 seconds
+    const activePtsList = new Set();
+    try {
+      const ptsFiles = fs.readdirSync('/dev/pts');
+      for (const pts of ptsFiles) {
+        if (/^\d+$/.test(pts)) {
+          const fullPath = `/dev/pts/${pts}`;
+          try {
+            const st = fs.statSync(fullPath);
+            if ((now - st.mtimeMs) / 1000 < 90) {
+              activePtsList.add(fullPath);
+            }
+          } catch (e) {}
+        }
+      }
+    } catch (e) {}
+
+    for (const line of psLines) {
+      const m = line.trim().match(/^(\d+)\s+(\d+)\s+(.+)$/);
+      if (!m) continue;
+      const pid = parseInt(m[1], 10);
+      const cmd = m[3];
+      const cmdLower = cmd.toLowerCase();
+
+      // Skip non-IDE commands or own process
+      if (cmdLower.includes('grep') || cmdLower.includes('node -e') || cmdLower.includes('server/index.js')) continue;
+
+      for (const ideDef of IDE_DEFINITIONS) {
+        const matchesAlias = ideDef.aliases.some(alias => 
+          cmdLower.includes(alias) || 
+          cmdLower.includes(`/${alias}`) ||
+          cmdLower.includes(`bin/${alias}`)
+        );
+
+        if (matchesAlias) {
+          if (!detectedIDEs.has(ideDef.name)) {
+            detectedIDEs.set(ideDef.name, {
+              key: ideDef.key,
+              name: ideDef.name,
+              configDirs: ideDef.configDirs || [],
+              pids: [],
+              workspaces: new Set(),
+              recentFiles: [],
+              hasActiveTerminal: false,
+              lastActiveSecs: Infinity,
+              activityScore: 0
+            });
+          }
+
+          const entry = detectedIDEs.get(ideDef.name);
+          entry.pids.push(pid);
+
+          // Check child working directory
+          try {
+            const cwd = fs.readlinkSync(`/proc/${pid}/cwd`);
+            if (cwd && cwd !== '/' && cwd !== os.homedir() && !cwd.startsWith('/proc') && !cwd.startsWith('/tmp')) {
+              entry.workspaces.add(cwd);
+            }
+          } catch (e) {}
+
+          // Check if this process has an active pts
+          if (activePtsList.size > 0) {
+            try {
+              const fdDir = `/proc/${pid}/fd`;
+              if (fs.existsSync(fdDir)) {
+                const fds = fs.readdirSync(fdDir);
+                for (const fd of fds) {
+                  try {
+                    const target = fs.readlinkSync(path.join(fdDir, fd));
+                    if (activePtsList.has(target)) {
+                      entry.hasActiveTerminal = true;
+                      entry.activityScore += 50;
+                      break;
+                    }
+                  } catch (e) {}
+                }
+              }
+            } catch (e) {}
+          }
+          break;
+        }
+      }
+    }
+
+    // 2. Read workspaceStorage & History for Electron/VSCode-based IDEs
+    for (const [name, ide] of detectedIDEs.entries()) {
+      for (const configDir of ide.configDirs) {
+        if (!configDir || !fs.existsSync(configDir)) continue;
+
+        // Check workspaceStorage
+        const wsDir = path.join(configDir, 'User', 'workspaceStorage');
+        if (fs.existsSync(wsDir)) {
+          try {
+            const hashes = fs.readdirSync(wsDir);
+            const wsEntries = [];
+            for (const h of hashes) {
+              const hPath = path.join(wsDir, h);
+              try {
+                const stat = fs.statSync(hPath);
+                const wsJson = path.join(hPath, 'workspace.json');
+                let folder = null;
+                if (fs.existsSync(wsJson)) {
+                  const d = JSON.parse(fs.readFileSync(wsJson, 'utf-8'));
+                  folder = d.folder || d.workspace;
+                  if (folder && folder.startsWith('file://')) {
+                    folder = decodeURIComponent(folder.replace('file://', ''));
+                  }
+                }
+                wsEntries.push({ folder, mtime: stat.mtimeMs });
+              } catch (e) {}
+            }
+            wsEntries.sort((a, b) => b.mtime - a.mtime);
+            if (wsEntries.length > 0) {
+              const recent = wsEntries[0];
+              if (recent.folder && !recent.folder.includes('.code-workspace')) {
+                ide.workspaces.add(recent.folder);
+              }
+              const ageSecs = Math.max(0, Math.round((now - recent.mtime) / 1000));
+              ide.lastActiveSecs = Math.min(ide.lastActiveSecs, ageSecs);
+              if (ageSecs < 120) {
+                ide.activityScore += 40;
+              } else if (ageSecs < 600) {
+                ide.activityScore += 20;
+              }
+            }
+          } catch (e) {}
+        }
+
+        // Check User/History for recent file edits
+        const histDir = path.join(configDir, 'User', 'History');
+        if (fs.existsSync(histDir)) {
+          try {
+            const hDirs = fs.readdirSync(histDir);
+            const fileEntries = [];
+            for (const hd of hDirs) {
+              const entriesJson = path.join(histDir, hd, 'entries.json');
+              if (fs.existsSync(entriesJson)) {
+                try {
+                  const edata = JSON.parse(fs.readFileSync(entriesJson, 'utf-8'));
+                  let res = edata.resource;
+                  if (res && res.startsWith('file://')) {
+                    res = decodeURIComponent(res.replace('file://', ''));
+                  }
+                  const tsList = (edata.entries || []).map(e => e.timestamp || 0);
+                  const maxTs = tsList.length > 0 ? Math.max(...tsList) : fs.statSync(entriesJson).mtimeMs;
+                  fileEntries.push({ file: res, ts: maxTs });
+                } catch (e) {}
+              }
+            }
+            fileEntries.sort((a, b) => b.ts - a.ts);
+            if (fileEntries.length > 0) {
+              ide.recentFiles = fileEntries.slice(0, 3).map(f => f.file).filter(Boolean);
+              const latestEditAge = Math.max(0, Math.round((now - fileEntries[0].ts) / 1000));
+              if (latestEditAge < 180) {
+                ide.activityScore += 50;
+              } else if (latestEditAge < 900) {
+                ide.activityScore += 25;
+              }
+            }
+          } catch (e) {}
+        }
+      }
+    }
+
+    // Process list into formatted active IDEs array
+    const idesList = [];
+    for (const [name, ide] of detectedIDEs.entries()) {
+      const wsArray = Array.from(ide.workspaces).filter(w => w && w !== '/' && w !== os.homedir());
+      const primaryWs = wsArray[0] || null;
+      const cleanWs = cleanProjectName(primaryWs);
+      const branch = primaryWs ? getGitBranch(primaryWs) : null;
+      const latestFile = ide.recentFiles.length > 0 ? path.basename(ide.recentFiles[0]) : null;
+
+      // Base score for process count
+      ide.activityScore += Math.min(20, ide.pids.length);
+
+      idesList.push({
+        key: ide.key,
+        name: ide.name,
+        processCount: ide.pids.length,
+        workspaces: wsArray.map(cleanProjectName).filter(Boolean),
+        rawWorkspaces: wsArray,
+        currentWorkspace: cleanWs,
+        currentWorkspacePath: primaryWs,
+        gitBranch: branch,
+        currentFile: latestFile,
+        recentFiles: ide.recentFiles.map(f => path.basename(f)),
+        hasActiveTerminal: ide.hasActiveTerminal,
+        lastActiveSecs: ide.lastActiveSecs === Infinity ? null : ide.lastActiveSecs,
+        activityScore: ide.activityScore,
+        isActive: false
+      });
+    }
+
+    // Sort by activityScore descending
+    idesList.sort((a, b) => b.activityScore - a.activityScore);
+
+    // If we have IDEs running, mark the top one as active
+    let primary = null;
+    if (idesList.length > 0) {
+      idesList[0].isActive = true;
+      primary = idesList[0];
+    }
+
+    return {
+      activeIDEs: idesList,
+      primaryActiveIDE: primary
+    };
+  }
+
   async _detectLinux() {
     let idleSeconds = 0;
     let activeWindow = null;
@@ -106,7 +510,7 @@ export class MachineTracker {
 
     const isIdle = idleSeconds > this.idleThresholdSecs;
 
-    // 2. Media via MPRIS (Spotify, Brave/Chrome/Firefox YouTube/Music, VLC, Amberol, etc.)
+    // 2. Media via MPRIS
     try {
       const { stdout } = await execAsync('busctl --user list');
       const mprisLines = stdout.split('\n').filter(l => l.includes('org.mpris.MediaPlayer2'));
@@ -135,7 +539,10 @@ export class MachineTracker {
       }
     } catch (e) {}
 
-    // 3. Active Window via X11 / Xwayland
+    // 3. Inspect running IDEs on the host
+    const { activeIDEs, primaryActiveIDE } = await this._inspectRunningIDEs();
+
+    // 4. Active Window via X11 / Xwayland
     try {
       let winId = null;
       try {
@@ -146,7 +553,6 @@ export class MachineTracker {
         }
       } catch (e) {}
 
-      // If active window not found or default root, check top window in stacking list
       if (!winId) {
         try {
           const { stdout: stackOut } = await execAsync('xprop -root _NET_CLIENT_LIST_STACKING');
@@ -154,7 +560,6 @@ export class MachineTracker {
           if (stackMatch) {
             const ids = stackMatch[1].split(',').map(s => s.trim()).filter(Boolean);
             if (ids.length > 0) {
-              // Iterate from top to bottom of stacking list to find real window
               for (let i = ids.length - 1; i >= 0; i--) {
                 const testId = ids[i];
                 try {
@@ -182,7 +587,6 @@ export class MachineTracker {
           const rawTitle = nameMatch ? nameMatch[1] : '';
           const rawClass = classMatch ? (classMatch[2] || classMatch[1]) : '';
           
-          // Ignore desktop overlay backgrounds
           if (rawTitle && !['hidamari', 'Wayland to X Recording bridge', 'gnome-shell', 'xwaylandvideobridge'].includes(rawTitle)) {
             activeWindow = {
               id: winId,
@@ -195,16 +599,54 @@ export class MachineTracker {
       }
     } catch (e) {}
 
-    // Resolve active app, title, and category ONLY from real active window or media (NO GUESSING)
+    // 5. Synthesize result
     let appName = null;
     let windowTitle = null;
     let category = 'other';
     let notes = '';
+    let workspace = null;
+    let gitBranch = null;
+    let file = null;
+    let ideName = null;
 
     if (activeWindow && (activeWindow.title || activeWindow.wmClass)) {
       appName = this._formatAppName(activeWindow.wmClass || activeWindow.title);
       windowTitle = activeWindow.title || appName;
       category = detectCategory(appName, windowTitle);
+
+      // If active window is an IDE, enrich with workspace details
+      const matchedIDE = activeIDEs.find(ide => 
+        ide.name.toLowerCase() === appName.toLowerCase() ||
+        appName.toLowerCase().includes(ide.key)
+      );
+
+      if (matchedIDE) {
+        category = 'coding';
+        ideName = matchedIDE.name;
+        workspace = matchedIDE.currentWorkspace;
+        gitBranch = matchedIDE.gitBranch;
+        file = matchedIDE.currentFile;
+        // Mark as actively focused IDE
+        for (const ide of activeIDEs) ide.isActive = (ide.name === matchedIDE.name);
+      }
+    } else if (primaryActiveIDE && !isIdle) {
+      // Wayland / No foreground X11 window -> actively coding in primary IDE
+      appName = primaryActiveIDE.name;
+      ideName = primaryActiveIDE.name;
+      category = 'coding';
+      workspace = primaryActiveIDE.currentWorkspace;
+      gitBranch = primaryActiveIDE.gitBranch;
+      file = primaryActiveIDE.currentFile;
+
+      // Construct rich title
+      if (workspace && file) {
+        windowTitle = `${workspace} — ${file}${gitBranch ? ` (${gitBranch})` : ''}`;
+      } else if (workspace) {
+        windowTitle = `${workspace} (Active Workspace)${gitBranch ? ` [${gitBranch}]` : ''}`;
+      } else {
+        windowTitle = `${primaryActiveIDE.name} Workspace`;
+      }
+      notes = `Active IDE session in ${primaryActiveIDE.name}${workspace ? ` (${workspace})` : ''}`;
     } else if (media && media.isPlaying) {
       appName = media.player || 'Music Player';
       windowTitle = `${media.artist ? media.artist + ' - ' : ''}${media.title}`;
@@ -212,7 +654,7 @@ export class MachineTracker {
       notes = `Playing on ${media.player}${media.album ? ` (${media.album})` : ''}`;
     }
 
-    // Enhance notes if media is playing in background while working in another app
+    // Enhance notes if background media is playing while coding/working
     if (media && media.isPlaying && appName && category !== 'music') {
       notes = `Background Music: ${media.artist ? media.artist + ' - ' : ''}${media.title}`;
     }
@@ -221,6 +663,12 @@ export class MachineTracker {
       appName,
       windowTitle,
       category,
+      workspace,
+      gitBranch,
+      file,
+      ideName,
+      activeIDEs,
+      primaryActiveIDE,
       idleSeconds,
       isIdle,
       media,
@@ -233,6 +681,11 @@ export class MachineTracker {
     let appName = null;
     let windowTitle = null;
     let category = 'other';
+    let workspace = null;
+    let gitBranch = null;
+    let file = null;
+    let ideName = null;
+    const { activeIDEs, primaryActiveIDE } = await this._inspectRunningIDEs();
 
     try {
       const psScript = `
@@ -279,17 +732,46 @@ export class MachineTracker {
         windowTitle = parsed.Title || appName;
         idleSeconds = parseInt(parsed.Idle, 10) || 0;
         category = detectCategory(appName, windowTitle);
+
+        if (category === 'coding') {
+          ideName = appName;
+          const matchedIDE = activeIDEs.find(i => i.name.toLowerCase() === appName.toLowerCase() || appName.toLowerCase().includes(i.key));
+          if (matchedIDE) {
+            workspace = matchedIDE.currentWorkspace;
+            gitBranch = matchedIDE.gitBranch;
+            file = matchedIDE.currentFile;
+            for (const ide of activeIDEs) ide.isActive = (ide.name === matchedIDE.name);
+          }
+        }
       } else if (parsed) {
         idleSeconds = parseInt(parsed.Idle, 10) || 0;
       }
     } catch (e) {}
 
+    const isIdle = idleSeconds > this.idleThresholdSecs;
+
+    if (!appName && primaryActiveIDE && !isIdle) {
+      appName = primaryActiveIDE.name;
+      ideName = primaryActiveIDE.name;
+      category = 'coding';
+      workspace = primaryActiveIDE.currentWorkspace;
+      gitBranch = primaryActiveIDE.gitBranch;
+      file = primaryActiveIDE.currentFile;
+      windowTitle = workspace ? `${workspace} (Active Workspace)` : `${primaryActiveIDE.name} Workspace`;
+    }
+
     return {
       appName,
       windowTitle,
       category,
+      workspace,
+      gitBranch,
+      file,
+      ideName,
+      activeIDEs,
+      primaryActiveIDE,
       idleSeconds,
-      isIdle: idleSeconds > this.idleThresholdSecs,
+      isIdle,
       media: null,
       notes: ''
     };
@@ -300,6 +782,11 @@ export class MachineTracker {
     let windowTitle = null;
     let category = 'other';
     let idleSeconds = 0;
+    let workspace = null;
+    let gitBranch = null;
+    let file = null;
+    let ideName = null;
+    const { activeIDEs, primaryActiveIDE } = await this._inspectRunningIDEs();
 
     try {
       const { stdout } = await execAsync(`osascript -e 'tell application "System Events" to get {name, title} of first application process whose frontmost is true'`);
@@ -308,6 +795,17 @@ export class MachineTracker {
         appName = this._formatAppName(parts[0]);
         windowTitle = parts[1] || appName;
         category = detectCategory(appName, windowTitle);
+
+        if (category === 'coding') {
+          ideName = appName;
+          const matchedIDE = activeIDEs.find(i => i.name.toLowerCase() === appName.toLowerCase() || appName.toLowerCase().includes(i.key));
+          if (matchedIDE) {
+            workspace = matchedIDE.currentWorkspace;
+            gitBranch = matchedIDE.gitBranch;
+            file = matchedIDE.currentFile;
+            for (const ide of activeIDEs) ide.isActive = (ide.name === matchedIDE.name);
+          }
+        }
       }
     } catch (e) {}
 
@@ -316,12 +814,30 @@ export class MachineTracker {
       idleSeconds = parseInt(idleOut.trim(), 10) || 0;
     } catch (e) {}
 
+    const isIdle = idleSeconds > this.idleThresholdSecs;
+
+    if (!appName && primaryActiveIDE && !isIdle) {
+      appName = primaryActiveIDE.name;
+      ideName = primaryActiveIDE.name;
+      category = 'coding';
+      workspace = primaryActiveIDE.currentWorkspace;
+      gitBranch = primaryActiveIDE.gitBranch;
+      file = primaryActiveIDE.currentFile;
+      windowTitle = workspace ? `${workspace} (Active Workspace)` : `${primaryActiveIDE.name} Workspace`;
+    }
+
     return {
       appName,
       windowTitle,
       category,
+      workspace,
+      gitBranch,
+      file,
+      ideName,
+      activeIDEs,
+      primaryActiveIDE,
       idleSeconds,
-      isIdle: idleSeconds > this.idleThresholdSecs,
+      isIdle,
       media: null,
       notes: ''
     };
@@ -332,6 +848,12 @@ export class MachineTracker {
       appName: null,
       windowTitle: null,
       category: null,
+      workspace: null,
+      gitBranch: null,
+      file: null,
+      ideName: null,
+      activeIDEs: [],
+      primaryActiveIDE: null,
       idleSeconds: 0,
       isIdle: false,
       media: null,
@@ -343,10 +865,25 @@ export class MachineTracker {
     if (!rawName) return '';
     const lower = rawName.toLowerCase();
     if (lower.includes('antigravity')) return 'Antigravity';
-    if (lower.includes('code') || lower.includes('vscode')) return 'Visual Studio Code';
+    if (lower.includes('vscode') || lower.includes('visual studio code') || lower === 'code' || lower.includes('code - oss')) return 'Visual Studio Code';
     if (lower.includes('cursor')) return 'Cursor';
+    if (lower.includes('windsurf')) return 'Windsurf';
+    if (lower.includes('positron')) return 'Positron';
+    if (lower.includes('zed')) return 'Zed';
+    if (lower.includes('pycharm')) return 'PyCharm';
+    if (lower.includes('intellij') || lower.includes('idea')) return 'IntelliJ IDEA';
+    if (lower.includes('webstorm')) return 'WebStorm';
+    if (lower.includes('clion')) return 'CLion';
+    if (lower.includes('rider')) return 'JetBrains Rider';
+    if (lower.includes('goland')) return 'GoLand';
+    if (lower.includes('android studio') || lower.includes('studio64')) return 'Android Studio';
+    if (lower.includes('sublime')) return 'Sublime Text';
+    if (lower.includes('neovim') || lower.includes('nvim')) return 'Neovim';
+    if (lower.includes('vim')) return 'Vim';
+    if (lower.includes('emacs')) return 'Emacs';
+
     if (lower.includes('brave')) return 'Brave';
-    if (lower.includes('chrome')) return 'Google Chrome';
+    if (lower.includes('chrome') || lower.includes('chromium')) return 'Google Chrome';
     if (lower.includes('firefox')) return 'Firefox';
     if (lower.includes('spotify')) return 'Spotify';
     if (lower.includes('claude')) return 'Claude';
@@ -369,6 +906,8 @@ export class MachineTracker {
     this.lastIdleSeconds = probe.idleSeconds || 0;
     this.isIdle = probe.isIdle;
     this.currentMedia = probe.media || null;
+    this.activeIDEs = probe.activeIDEs || [];
+    this.primaryActiveIDE = probe.primaryActiveIDE || null;
 
     const now = new Date();
 
@@ -392,6 +931,10 @@ export class MachineTracker {
     let windowTitle = probe.windowTitle;
     let category = probe.category;
     let notes = probe.notes || '';
+    let workspace = probe.workspace || null;
+    let gitBranch = probe.gitBranch || null;
+    let file = probe.file || null;
+    let ideName = probe.ideName || null;
 
     if (!appName && probe.media && probe.media.isPlaying) {
       appName = probe.media.player || 'Music Player';
@@ -407,8 +950,13 @@ export class MachineTracker {
       return;
     }
 
-    // Check if continuing same activity session
-    if (this.currentActivity && this.currentActivity.appName === appName && this.currentActivity.category === category) {
+    // Check if continuing same activity session (same app & category & workspace)
+    const isSameActivity = this.currentActivity && 
+      this.currentActivity.appName === appName && 
+      this.currentActivity.category === category &&
+      (this.currentActivity.workspace === workspace || (!this.currentActivity.workspace && !workspace));
+
+    if (isSameActivity) {
       // Accumulate time in current session
       const startTime = new Date(this.currentActivity.startTime);
       const currentDurationSecs = Math.max(1, Math.round((now.getTime() - startTime.getTime()) / 1000));
@@ -417,6 +965,10 @@ export class MachineTracker {
       this.currentActivity.lastActiveTime = now.toISOString();
       this.currentActivity.title = windowTitle || this.currentActivity.title;
       this.currentActivity.notes = notes || this.currentActivity.notes;
+      this.currentActivity.workspace = workspace || this.currentActivity.workspace;
+      this.currentActivity.gitBranch = gitBranch || this.currentActivity.gitBranch;
+      this.currentActivity.file = file || this.currentActivity.file;
+      this.currentActivity.ideName = ideName || this.currentActivity.ideName;
 
       // Update in db periodically (every ~6 seconds)
       if (this.totalPolledCount % 2 === 0) {
@@ -424,7 +976,11 @@ export class MachineTracker {
           duration: currentDurationSecs,
           endTime: now.toISOString(),
           title: this.currentActivity.title,
-          notes: this.currentActivity.notes
+          notes: this.currentActivity.notes,
+          workspace: this.currentActivity.workspace,
+          gitBranch: this.currentActivity.gitBranch,
+          file: this.currentActivity.file,
+          ideName: this.currentActivity.ideName
         });
       }
     } else {
@@ -441,7 +997,11 @@ export class MachineTracker {
         duration: Math.round(this.pollIntervalMs / 1000),
         startTime: now.toISOString(),
         endTime: new Date(now.getTime() + this.pollIntervalMs).toISOString(),
-        notes
+        notes,
+        workspace,
+        gitBranch,
+        file,
+        ideName
       });
 
       this.currentActivity = {
@@ -449,13 +1009,17 @@ export class MachineTracker {
         appName: newEntry.appName,
         title: newEntry.title,
         category: newEntry.category,
+        workspace: newEntry.workspace,
+        gitBranch: newEntry.gitBranch,
+        file: newEntry.file,
+        ideName: newEntry.ideName,
         startTime: newEntry.startTime,
         lastActiveTime: now.toISOString(),
         duration: newEntry.duration,
         notes: newEntry.notes
       };
 
-      console.log(`[MachineTracker] Started tracking: [${category.toUpperCase()}] ${appName} - "${windowTitle}"`);
+      console.log(`[MachineTracker] Started tracking: [${category.toUpperCase()}] ${appName} ${workspace ? `[📁 ${workspace}]` : ''} - "${windowTitle}"`);
     }
   }
 
@@ -493,6 +1057,8 @@ export class MachineTracker {
           ? Math.max(1, Math.round((Date.now() - new Date(this.currentActivity.startTime).getTime()) / 1000))
           : this.currentActivity.duration
       } : null,
+      activeIDEs: this.activeIDEs,
+      primaryActiveIDE: this.primaryActiveIDE,
       media: this.currentMedia,
       lastPollTime: this.lastPollTime,
       totalPolledCount: this.totalPolledCount

@@ -288,7 +288,7 @@ export default function ChartsSection({ summary }) {
 
       </div>
 
-      {/* Multi-day Daily Breakdown if multiple days selected */}
+        {/* Multi-day Daily Breakdown if multiple days selected */}
       {showDaily && (
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between gap-2 mb-3">
@@ -304,6 +304,95 @@ export default function ChartsSection({ summary }) {
           <div className="h-44">
             <Bar data={dailyData} options={dailyOptions} />
           </div>
+        </div>
+      )}
+
+      {/* Coding & IDE Breakdown Section */}
+      {(summary.ideBreakdown?.length > 0 || summary.workspaceBreakdown?.length > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          {/* IDE Distribution Card */}
+          {summary.ideBreakdown?.length > 0 && (
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <PieChart className="w-4 h-4 text-sky-400" />
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      IDEs on Activity
+                    </h3>
+                  </div>
+                  <span className="text-[11px] text-slate-500">
+                    {formatDuration(summary.categoryTotals?.coding || 0)} total coding
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {summary.ideBreakdown.map((ide) => (
+                    <div key={ide.name} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-slate-200 truncate">
+                          {ide.name}
+                        </span>
+                        <div className="flex items-center gap-2 font-mono text-[11px]">
+                          <span className="text-sky-400 font-bold">{formatDuration(ide.duration)}</span>
+                          <span className="text-slate-500">({ide.percentage}%)</span>
+                        </div>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 transition-all duration-500"
+                          style={{ width: `${Math.max(4, ide.percentage)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Project Workspaces Card */}
+          {summary.workspaceBreakdown?.length > 0 && (
+            <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-emerald-400" />
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      Active Workspaces & Projects
+                    </h3>
+                  </div>
+                  <span className="text-[11px] text-slate-500">
+                    {summary.workspaceBreakdown.length} project{summary.workspaceBreakdown.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {summary.workspaceBreakdown.map((ws) => (
+                    <div key={ws.name} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-slate-200 truncate">
+                          📁 {ws.name}
+                        </span>
+                        <div className="flex items-center gap-2 font-mono text-[11px]">
+                          <span className="text-emerald-400 font-bold">{formatDuration(ws.duration)}</span>
+                          <span className="text-slate-500">({ws.percentage}%)</span>
+                        </div>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500"
+                          style={{ width: `${Math.max(4, ws.percentage)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       )}
     </div>
