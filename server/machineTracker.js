@@ -645,6 +645,85 @@ export class MachineTracker {
       } catch (e) {}
     }
 
+    // Check xdotool (for X11 / Xwayland)
+    if (!activeWindow) {
+      try {
+        const { stdout: xdoWin } = await execAsync('xdotool getactivewindow');
+        const xdoId = xdoWin.trim();
+        if (xdoId && /^\d+$/.test(xdoId)) {
+          const { stdout: xdoName } = await execAsync(`xdotool getwindowname ${xdoId}`).catch(() => ({ stdout: '' }));
+          const { stdout: xdoPid } = await execAsync(`xdotool getwindowpid ${xdoId}`).catch(() => ({ stdout: '' }));
+          let xdoClass = '';
+          try {
+            const { stdout: xdoClassOut } = await execAsync(`xprop -id ${xdoId} WM_CLASS`);
+            const cm = xdoClassOut.match(/WM_CLASS\([^)]+\)\s*=\s*"([^"]+)",\s*"([^"]+)"/);
+            if (cm) xdoClass = cm[2] || cm[1];
+          } catch (e) {}
+
+          const title = xdoName.trim();
+          if (title && !['hidamari', 'Wayland to X Recording bridge', 'gnome-shell', 'xwaylandvideobridge'].includes(title)) {
+            activeWindow = {
+              id: xdoId,
+              title,
+              wmClass: xdoClass || title,
+              pid: parseInt(xdoPid.trim(), 10) || null
+            };
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Check wmctrl (for X11 / Xwayland)
+    if (!activeWindow) {
+      try {
+        const { stdout: wmOut } = await execAsync('wmctrl -lx');
+        if (wmOut) {
+          const { stdout: rootOut } = await execAsync('xprop -root _NET_ACTIVE_WINDOW').catch(() => ({ stdout: '' }));
+          const rootMatch = rootOut.match(/0x[0-9a-fA-F]+/);
+          if (rootMatch) {
+            const activeHex = parseInt(rootMatch[0], 16);
+            for (const line of wmOut.split('\n')) {
+              const parts = line.trim().split(/\s+/);
+              if (parts.length >= 4) {
+                const lineHex = parseInt(parts[0], 16);
+                if (lineHex === activeHex) {
+                  const wmClass = parts[2] ? parts[2].split('.')[0] : '';
+                  const title = parts.slice(4).join(' ');
+                  if (title && !['hidamari', 'Wayland to X Recording bridge', 'gnome-shell', 'xwaylandvideobridge'].includes(title)) {
+                    activeWindow = {
+                      id: parts[0],
+                      title,
+                      wmClass: wmClass || title
+                    };
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Check KDE Plasma Wayland via qdbus
+    if (!activeWindow) {
+      try {
+        const { stdout: kwinOut } = await execAsync('qdbus org.kde.KWin /KWin org.kde.KWin.activeWindow');
+        const kwinId = kwinOut.trim();
+        if (kwinId) {
+          const { stdout: kwinTitle } = await execAsync(`qdbus org.kde.KWin /KWin org.kde.KWin.windowCaption ${kwinId}`).catch(() => ({ stdout: '' }));
+          const { stdout: kwinClass } = await execAsync(`qdbus org.kde.KWin /KWin org.kde.KWin.windowClass ${kwinId}`).catch(() => ({ stdout: '' }));
+          if (kwinTitle.trim() || kwinClass.trim()) {
+            activeWindow = {
+              id: kwinId,
+              title: kwinTitle.trim() || kwinClass.trim(),
+              wmClass: kwinClass.trim() || kwinTitle.trim()
+            };
+          }
+        }
+      } catch (e) {}
+    }
+
     // 5. Synthesize result
     let appName = null;
     let windowTitle = null;

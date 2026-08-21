@@ -667,6 +667,12 @@ export default function AppIcon({
   shadow = true
 }) {
   const [imgFailed, setImgFailed] = useState(false);
+
+  // Reset error state when appName changes
+  React.useEffect(() => {
+    setImgFailed(false);
+  }, [appName]);
+
   const iconKey = getAppIconKey(appName);
   const sizeClass = SIZE_CLASSES[size] || SIZE_CLASSES.md;
   const isLarge = size === 'lg' || size === 'xl' || size === '2xl';
@@ -681,7 +687,25 @@ export default function AppIcon({
 
   const shadowClass = shadow ? 'shadow-sm' : '';
 
-  // 1. If we have a vector brand SVG, render it crisp immediately
+  // 1. Try loading real authentic system icon from backend (/api/icons/:appName)
+  if (appName && !imgFailed) {
+    return (
+      <div
+        className={`relative inline-flex items-center justify-center flex-shrink-0 overflow-hidden bg-slate-800/40 ${sizeClass} ${roundClass} ${shadowClass} ${className}`}
+        title={appName}
+      >
+        <img
+          src={`/api/icons/${encodeURIComponent(appName)}`}
+          alt={appName}
+          className="w-full h-full object-contain p-0.5"
+          onError={() => setImgFailed(true)}
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
+  // 2. Fallback to crisp vector brand SVG if system icon not available or failed
   if (iconKey && BRAND_SVGS[iconKey]) {
     const SvgComponent = BRAND_SVGS[iconKey];
     return (
@@ -690,24 +714,6 @@ export default function AppIcon({
         title={appName}
       >
         <SvgComponent />
-      </div>
-    );
-  }
-
-  // 2. Try loading system icon from backend (/api/icons/:appName) if not failed
-  if (appName && !imgFailed) {
-    return (
-      <div
-        className={`relative inline-flex items-center justify-center flex-shrink-0 overflow-hidden bg-slate-800/60 ${sizeClass} ${roundClass} ${shadowClass} ${className}`}
-        title={appName}
-      >
-        <img
-          src={`/api/icons/${encodeURIComponent(appName)}`}
-          alt={appName}
-          className="w-full h-full object-contain"
-          onError={() => setImgFailed(true)}
-          loading="lazy"
-        />
       </div>
     );
   }
