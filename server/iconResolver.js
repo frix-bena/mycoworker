@@ -60,8 +60,26 @@ function scoreIcon(filePath, matchType) {
   if (filePath.includes('48x48')) score += 150;
   if (filePath.includes('32x32')) score += 100;
   if (filePath.includes('pixmaps')) score += 250;
-  if (filePath.includes('/apps/')) score += 150;
-  if (filePath.includes('hicolor')) score += 50;
+  if (filePath.includes('/apps/')) score += 200;
+  if (filePath.includes('hicolor')) score += 100;
+
+  // Heavily penalize monochromatic symbolic icons over colored brand icons
+  if (filePath.includes('-symbolic') || filePath.includes('/symbolic/')) {
+    score -= 600;
+  }
+
+  // Heavily penalize non-app folders for fuzzy/prefix matches
+  if (
+    filePath.includes('/mimetypes/') ||
+    filePath.includes('/actions/') ||
+    filePath.includes('/status/') ||
+    filePath.includes('/places/') ||
+    filePath.includes('/emblems/') ||
+    filePath.includes('/categories/') ||
+    filePath.includes('/devices/')
+  ) {
+    score -= 2500;
+  }
 
   return score;
 }
@@ -282,6 +300,7 @@ class IconResolver {
     if (lower.includes('onlyoffice')) candidatesToSearch.push('org.onlyoffice.desktopeditors');
 
     // 3. Search in indexed system icons
+    const GENERIC_EXCLUDES = new Set(['unknown', 'generic', 'default', 'folder', 'file', 'application', 'action', 'status', 'document', 'text', 'dialog']);
     const matched = [];
     for (const searchTarget of candidatesToSearch) {
       const rawTarget = searchTarget.toLowerCase().replace(/\.(png|svg|ico|xpm)$/, '');
@@ -297,7 +316,13 @@ class IconResolver {
           matched.push({ path: iconFile, score: scoreIcon(iconFile, 'exact') });
         } else if (cleanBase === cleanTarget) {
           matched.push({ path: iconFile, score: scoreIcon(iconFile, 'cleanExact') });
-        } else if (base.startsWith(rawTarget) || rawTarget.startsWith(base)) {
+        } else if (
+          (base.startsWith(rawTarget) || rawTarget.startsWith(base)) &&
+          Math.min(base.length, rawTarget.length) >= 3 &&
+          !GENERIC_EXCLUDES.has(base) &&
+          !GENERIC_EXCLUDES.has(rawTarget) &&
+          (iconFile.includes('/apps/') || iconFile.includes('pixmaps') || iconFile.includes('applications'))
+        ) {
           matched.push({ path: iconFile, score: scoreIcon(iconFile, 'prefix') });
         }
       }

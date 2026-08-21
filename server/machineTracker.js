@@ -1188,6 +1188,7 @@ export class MachineTracker {
       currentActivity: this.currentActivity ? {
         ...this.currentActivity,
         iconUrl: `/api/icons/${encodeURIComponent(this.currentActivity.appName)}`,
+        iconBase64: iconResolver.getIconBase64(this.currentActivity.appName) || null,
         liveDuration: this.currentActivity.startTime
           ? Math.max(1, Math.round((Date.now() - new Date(this.currentActivity.startTime).getTime()) / 1000))
           : this.currentActivity.duration

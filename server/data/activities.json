@@ -1,5 +1,35 @@
 [
   {
+    "id": "6e7b8d92-1ac8-4be0-9170-c45e19e7bdbe",
+    "title": "Claude",
+    "appName": "Claude",
+    "category": "work",
+    "duration": 2,
+    "startTime": "2026-08-21T19:38:12.747Z",
+    "endTime": "2026-08-21T19:38:14.247Z",
+    "notes": "",
+    "workspace": null,
+    "gitBranch": null,
+    "file": null,
+    "ideName": null,
+    "createdAt": "2026-08-21T19:38:12.752Z"
+  },
+  {
+    "id": "9aaca77e-22c9-4537-ad86-e703bb732858",
+    "title": "Claude",
+    "appName": "Claude",
+    "category": "work",
+    "duration": 2,
+    "startTime": "2026-08-21T19:37:34.914Z",
+    "endTime": "2026-08-21T19:37:36.414Z",
+    "notes": "",
+    "workspace": null,
+    "gitBranch": null,
+    "file": null,
+    "ideName": null,
+    "createdAt": "2026-08-21T19:37:34.915Z"
+  },
+  {
     "id": "ed848631-a86c-4636-9a80-007f7f0e50b2",
     "title": "Claude",
     "appName": "Claude",

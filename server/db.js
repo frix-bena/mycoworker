@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
+import { iconResolver } from './iconResolver.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -254,12 +255,20 @@ class ActivityStore {
       activities = activities.slice(0, Number(limit));
     }
 
-    return activities;
+    return activities.map(a => ({
+      ...a,
+      iconUrl: `/api/icons/${encodeURIComponent(a.appName || a.title || 'App')}`
+    }));
   }
 
   async getById(id) {
     const activities = await this._readData();
-    return activities.find(a => a.id === id) || null;
+    const act = activities.find(a => a.id === id);
+    if (!act) return null;
+    return {
+      ...act,
+      iconUrl: `/api/icons/${encodeURIComponent(act.appName || act.title || 'App')}`
+    };
   }
 
   async create(data) {
@@ -494,7 +503,8 @@ class ActivityStore {
         ...app,
         rank: idx + 1,
         percentage: totalDuration > 0 ? Math.round((app.duration / totalDuration) * 100) : 0,
-        iconUrl: `/api/icons/${encodeURIComponent(app.name)}`
+        iconUrl: `/api/icons/${encodeURIComponent(app.name)}`,
+        iconBase64: iconResolver.getIconBase64(app.name) || null
       }));
 
     // Format IDE breakdown

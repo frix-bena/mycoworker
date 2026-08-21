@@ -165,6 +165,9 @@ mycowoker/
 | `GET` | `/api/tracker/status` | Current machine activity, active application, media playing, and idle state |
 | `POST` | `/api/tracker/toggle` | Toggle automatic machine activity tracking on/off |
 | `POST` | `/api/tracker/poll-now` | Force an immediate machine activity probe & database sync |
+| `GET` | `/api/icons/:appName` | Stream authentic system application icon (PNG/SVG) from `.desktop` and icon theme paths |
+| `GET` | `/api/icons/:appName/base64` | Retrieve base64 data URL of application icon |
+| `GET` | `/api/icons/system/apps` | List all discovered system `.desktop` applications |
 | `GET` | `/api/activities` | List activities (`?start=YYYY-MM-DD&end=YYYY-MM-DD&category=coding&search=term`) |
 | `GET` | `/api/activities/:id` | Get single activity by ID |
 | `POST` | `/api/activities` | Create a new activity entry |

@@ -687,7 +687,7 @@ export default function AppIcon({
 
   const shadowClass = shadow ? 'shadow-sm' : '';
 
-  // 1. Try loading real authentic system icon from backend (/api/icons/:appName)
+  // 1. Try loading real authentic system icon from backend (/api/icons/:appName?fallback=none)
   if (appName && !imgFailed) {
     return (
       <div
@@ -695,7 +695,7 @@ export default function AppIcon({
         title={appName}
       >
         <img
-          src={`/api/icons/${encodeURIComponent(appName)}`}
+          src={`/api/icons/${encodeURIComponent(appName)}?fallback=none`}
           alt={appName}
           className="w-full h-full object-contain p-0.5"
           onError={() => setImgFailed(true)}
