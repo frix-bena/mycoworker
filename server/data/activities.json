@@ -1,5 +1,21 @@
 [
   {
+    "id": "aa9fb8dd-81cd-43c4-a8ee-d89baf67d1b3",
+    "title": "Claude",
+    "appName": "Claude",
+    "category": "work",
+    "duration": 5,
+    "startTime": "2026-08-21T18:19:24.419Z",
+    "endTime": "2026-08-21T18:19:28.936Z",
+    "notes": "Background Music: Young Thug, Lil Baby - Bad Bad Bad (feat. Lil Baby)",
+    "workspace": null,
+    "gitBranch": null,
+    "file": null,
+    "ideName": null,
+    "createdAt": "2026-08-21T18:19:24.420Z",
+    "updatedAt": "2026-08-21T18:19:28.936Z"
+  },
+  {
     "id": "b4e1db8d-ba3d-4eee-a76a-385fb84634e9",
     "title": "Claude",
     "appName": "Claude",
