@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { db, detectCategory } from './db.js';
+import { iconResolver } from './iconResolver.js';
 
 const execAsync = promisify(exec);
 
@@ -186,13 +187,15 @@ function cleanProjectName(folderPath) {
 export class MachineTracker {
   constructor() {
     this.platform = os.platform(); // 'linux', 'win32', 'darwin'
+    this.sessionType = (process.env.XDG_SESSION_TYPE || 'x11').toLowerCase(); // 'wayland', 'x11'
+    this.desktopEnvironment = (process.env.XDG_CURRENT_DESKTOP || process.env.DESKTOP_SESSION || '').toLowerCase();
     this.isTracking = true;
-    this.pollIntervalMs = 3000; // Poll every 3 seconds
+    this.pollIntervalMs = 1500; // Poll every 1.5 seconds
     this.idleThresholdSecs = 75; // 75 seconds of no user input -> idle
     this.timer = null;
 
     // Current tracking state
-    this.currentActivity = null; // { id, appName, title, category, workspace, gitBranch, file, ideName, duration, notes }
+    this.currentActivity = null; // { id, appName, title, category, workspace, gitBranch, file, ideName, duration, notes, iconUrl }
     this.currentMedia = null; // { player, title, artist, album, isPlaying }
     this.activeIDEs = []; // [{ name, iconKey, isActive, processCount, workspaces, currentWorkspace, currentFile, gitBranch, lastActiveSecs }]
     this.primaryActiveIDE = null;
@@ -208,7 +211,7 @@ export class MachineTracker {
   start() {
     if (this.timer) return;
     this.isTracking = true;
-    console.log(`[MachineTracker] Started realistic machine & IDE activity tracker on ${this.platform} (interval: ${this.pollIntervalMs}ms)`);
+    console.log(`[MachineTracker] Started machine & application activity tracker on ${this.platform} (${this.sessionType}/${this.desktopEnvironment}) interval: ${this.pollIntervalMs}ms`);
     
     // Initial immediate probe
     this.poll();
@@ -267,7 +270,7 @@ export class MachineTracker {
   }
 
   /**
-   * Introspects running processes and config states to detect all active IDEs
+   * Introspects running processes and config states to detect active IDEs
    */
   async _inspectRunningIDEs() {
     const detectedIDEs = new Map();
@@ -477,7 +480,6 @@ export class MachineTracker {
     // Sort by activityScore descending
     idesList.sort((a, b) => b.activityScore - a.activityScore);
 
-    // If we have IDEs running, mark the top one as active
     let primary = null;
     if (idesList.length > 0) {
       idesList[0].isActive = true;
@@ -510,7 +512,7 @@ export class MachineTracker {
 
     const isIdle = idleSeconds > this.idleThresholdSecs;
 
-    // 2. Media via MPRIS
+    // 2. Media via MPRIS D-Bus
     try {
       const { stdout } = await execAsync('busctl --user list');
       const mprisLines = stdout.split('\n').filter(l => l.includes('org.mpris.MediaPlayer2'));
@@ -525,7 +527,7 @@ export class MachineTracker {
 
           if (statusMatch && statusMatch[1] === 'Playing') {
             const rawPlayer = busName.replace('org.mpris.MediaPlayer2.', '').split('.')[0];
-            const playerFormatted = rawPlayer.charAt(0).toUpperCase() + rawPlayer.slice(1);
+            const playerFormatted = this._formatAppName(rawPlayer);
             media = {
               player: playerFormatted,
               title: titleMatch ? titleMatch[1] : 'Audio Playback',
@@ -542,62 +544,106 @@ export class MachineTracker {
     // 3. Inspect running IDEs on the host
     const { activeIDEs, primaryActiveIDE } = await this._inspectRunningIDEs();
 
-    // 4. Active Window via X11 / Xwayland
+    // 4. Active Window Detection (Wayland / X11)
+    // Check Hyprland
     try {
-      let winId = null;
-      try {
-        const { stdout: rootOut } = await execAsync('xprop -root _NET_ACTIVE_WINDOW');
-        const winMatch = rootOut.match(/window id # (0x[0-9a-fA-F]+)/);
-        if (winMatch && winMatch[1] !== '0x0' && winMatch[1] !== '0x400003') {
-          winId = winMatch[1];
-        }
-      } catch (e) {}
-
-      if (!winId) {
-        try {
-          const { stdout: stackOut } = await execAsync('xprop -root _NET_CLIENT_LIST_STACKING');
-          const stackMatch = stackOut.match(/window id # ([0-9a-fA-Fx,\s]+)/);
-          if (stackMatch) {
-            const ids = stackMatch[1].split(',').map(s => s.trim()).filter(Boolean);
-            if (ids.length > 0) {
-              for (let i = ids.length - 1; i >= 0; i--) {
-                const testId = ids[i];
-                try {
-                  const { stdout: testProps } = await execAsync(`xprop -id ${testId} _NET_WM_NAME WM_NAME WM_CLASS`);
-                  const tMatch = testProps.match(/(?:_NET_WM_NAME|WM_NAME)\([^)]+\)\s*=\s*"([^"]+)"/);
-                  const title = tMatch ? tMatch[1] : '';
-                  if (title && !['hidamari', 'Wayland to X Recording bridge', 'gnome-shell', 'xwaylandvideobridge'].includes(title)) {
-                    winId = testId;
-                    break;
-                  }
-                } catch (e) {}
-              }
-            }
-          }
-        } catch (e) {}
-      }
-
-      if (winId) {
-        const { stdout: winProps } = await execAsync(`xprop -id ${winId} _NET_WM_NAME WM_NAME WM_CLASS _NET_WM_PID`);
-        const nameMatch = winProps.match(/(?:_NET_WM_NAME|WM_NAME)\([^)]+\)\s*=\s*"([^"]+)"/);
-        const classMatch = winProps.match(/WM_CLASS\([^)]+\)\s*=\s*"([^"]+)",\s*"([^"]+)"/);
-        const pidMatch = winProps.match(/_NET_WM_PID\(CARDINAL\)\s*=\s*(\d+)/);
-
-        if (nameMatch || classMatch) {
-          const rawTitle = nameMatch ? nameMatch[1] : '';
-          const rawClass = classMatch ? (classMatch[2] || classMatch[1]) : '';
-          
-          if (rawTitle && !['hidamari', 'Wayland to X Recording bridge', 'gnome-shell', 'xwaylandvideobridge'].includes(rawTitle)) {
-            activeWindow = {
-              id: winId,
-              title: rawTitle,
-              wmClass: rawClass,
-              pid: pidMatch ? parseInt(pidMatch[1], 10) : null
-            };
-          }
-        }
+      const { stdout: hyprOut } = await execAsync('hyprctl activewindow -j');
+      const parsed = JSON.parse(hyprOut.trim());
+      if (parsed && (parsed.class || parsed.title)) {
+        activeWindow = {
+          title: parsed.title || parsed.class,
+          wmClass: parsed.class || '',
+          pid: parsed.pid || null
+        };
       }
     } catch (e) {}
+
+    // Check Sway
+    if (!activeWindow) {
+      try {
+        const { stdout: swayOut } = await execAsync('swaymsg -t get_tree');
+        const root = JSON.parse(swayOut);
+        const findFocused = (node) => {
+          if (node.focused) return node;
+          for (const ch of node.nodes || []) {
+            const f = findFocused(ch);
+            if (f) return f;
+          }
+          for (const ch of node.floating_nodes || []) {
+            const f = findFocused(ch);
+            if (f) return f;
+          }
+          return null;
+        };
+        const focused = findFocused(root);
+        if (focused && (focused.name || focused.app_id)) {
+          activeWindow = {
+            title: focused.name || focused.app_id,
+            wmClass: focused.app_id || '',
+            pid: focused.pid || null
+          };
+        }
+      } catch (e) {}
+    }
+
+    // Check X11 / Xwayland via xprop
+    if (!activeWindow) {
+      try {
+        let winId = null;
+        try {
+          const { stdout: rootOut } = await execAsync('xprop -root _NET_ACTIVE_WINDOW');
+          const winMatch = rootOut.match(/window id # (0x[0-9a-fA-F]+)/);
+          if (winMatch && winMatch[1] !== '0x0' && winMatch[1] !== '0x400003') {
+            winId = winMatch[1];
+          }
+        } catch (e) {}
+
+        if (!winId) {
+          try {
+            const { stdout: stackOut } = await execAsync('xprop -root _NET_CLIENT_LIST_STACKING');
+            const stackMatch = stackOut.match(/window id # ([0-9a-fA-Fx,\s]+)/);
+            if (stackMatch) {
+              const ids = stackMatch[1].split(',').map(s => s.trim()).filter(Boolean);
+              if (ids.length > 0) {
+                for (let i = ids.length - 1; i >= 0; i--) {
+                  const testId = ids[i];
+                  try {
+                    const { stdout: testProps } = await execAsync(`xprop -id ${testId} _NET_WM_NAME WM_NAME WM_CLASS`);
+                    const tMatch = testProps.match(/(?:_NET_WM_NAME|WM_NAME)\([^)]+\)\s*=\s*"([^"]+)"/);
+                    const title = tMatch ? tMatch[1] : '';
+                    if (title && !['hidamari', 'Wayland to X Recording bridge', 'gnome-shell', 'xwaylandvideobridge'].includes(title)) {
+                      winId = testId;
+                      break;
+                    }
+                  } catch (e) {}
+                }
+              }
+            }
+          } catch (e) {}
+        }
+
+        if (winId) {
+          const { stdout: winProps } = await execAsync(`xprop -id ${winId} _NET_WM_NAME WM_NAME WM_CLASS _NET_WM_PID`);
+          const nameMatch = winProps.match(/(?:_NET_WM_NAME|WM_NAME)\([^)]+\)\s*=\s*"([^"]+)"/);
+          const classMatch = winProps.match(/WM_CLASS\([^)]+\)\s*=\s*"([^"]+)",\s*"([^"]+)"/);
+          const pidMatch = winProps.match(/_NET_WM_PID\(CARDINAL\)\s*=\s*(\d+)/);
+
+          if (nameMatch || classMatch) {
+            const rawTitle = nameMatch ? nameMatch[1] : '';
+            const rawClass = classMatch ? (classMatch[2] || classMatch[1]) : '';
+            
+            if (rawTitle && !['hidamari', 'Wayland to X Recording bridge', 'gnome-shell', 'xwaylandvideobridge'].includes(rawTitle)) {
+              activeWindow = {
+                id: winId,
+                title: rawTitle,
+                wmClass: rawClass,
+                pid: pidMatch ? parseInt(pidMatch[1], 10) : null
+              };
+            }
+          }
+        }
+      } catch (e) {}
+    }
 
     // 5. Synthesize result
     let appName = null;
@@ -626,11 +672,10 @@ export class MachineTracker {
         workspace = matchedIDE.currentWorkspace;
         gitBranch = matchedIDE.gitBranch;
         file = matchedIDE.currentFile;
-        // Mark as actively focused IDE
         for (const ide of activeIDEs) ide.isActive = (ide.name === matchedIDE.name);
       }
     } else if (primaryActiveIDE && !isIdle) {
-      // Wayland / No foreground X11 window -> actively coding in primary IDE
+      // Actively coding in primary IDE on Wayland host
       appName = primaryActiveIDE.name;
       ideName = primaryActiveIDE.name;
       category = 'coding';
@@ -638,7 +683,6 @@ export class MachineTracker {
       gitBranch = primaryActiveIDE.gitBranch;
       file = primaryActiveIDE.currentFile;
 
-      // Construct rich title
       if (workspace && file) {
         windowTitle = `${workspace} — ${file}${gitBranch ? ` (${gitBranch})` : ''}`;
       } else if (workspace) {
@@ -654,7 +698,6 @@ export class MachineTracker {
       notes = `Playing on ${media.player}${media.album ? ` (${media.album})` : ''}`;
     }
 
-    // Enhance notes if background media is playing while coding/working
     if (media && media.isPlaying && appName && category !== 'music') {
       notes = `Background Music: ${media.artist ? media.artist + ' - ' : ''}${media.title}`;
     }
@@ -863,6 +906,13 @@ export class MachineTracker {
 
   _formatAppName(rawName) {
     if (!rawName) return '';
+
+    // 1. Check if desktop app exists in index
+    const resolved = iconResolver.resolveDesktopApp(rawName);
+    if (resolved && resolved.name) {
+      return resolved.name;
+    }
+
     const lower = rawName.toLowerCase();
     if (lower.includes('antigravity')) return 'Antigravity';
     if (lower.includes('vscode') || lower.includes('visual studio code') || lower === 'code' || lower.includes('code - oss')) return 'Visual Studio Code';
@@ -890,6 +940,8 @@ export class MachineTracker {
     if (lower.includes('slack')) return 'Slack';
     if (lower.includes('discord')) return 'Discord';
     if (lower.includes('notion')) return 'Notion';
+    if (lower.includes('steam')) return 'Steam';
+    if (lower.includes('onlyoffice')) return 'ONLYOFFICE';
     if (lower.includes('terminal') || lower.includes('ptyxis') || lower.includes('alacritty') || lower.includes('kitty') || lower.includes('bash')) return 'Terminal';
     
     if (rawName.includes('.')) {
@@ -970,7 +1022,7 @@ export class MachineTracker {
       this.currentActivity.file = file || this.currentActivity.file;
       this.currentActivity.ideName = ideName || this.currentActivity.ideName;
 
-      // Update in db periodically (every ~6 seconds)
+      // Update in db periodically (every ~3 seconds / 2 polls)
       if (this.totalPolledCount % 2 === 0) {
         await db.update(this.currentActivity.id, {
           duration: currentDurationSecs,
@@ -1016,7 +1068,8 @@ export class MachineTracker {
         startTime: newEntry.startTime,
         lastActiveTime: now.toISOString(),
         duration: newEntry.duration,
-        notes: newEntry.notes
+        notes: newEntry.notes,
+        iconUrl: `/api/icons/${encodeURIComponent(newEntry.appName)}`
       };
 
       console.log(`[MachineTracker] Started tracking: [${category.toUpperCase()}] ${appName} ${workspace ? `[📁 ${workspace}]` : ''} - "${windowTitle}"`);
@@ -1047,12 +1100,15 @@ export class MachineTracker {
     return {
       isTracking: this.isTracking,
       platform: this.platform,
+      sessionType: this.sessionType,
+      desktopEnvironment: this.desktopEnvironment,
       pollIntervalMs: this.pollIntervalMs,
       idleThresholdSecs: this.idleThresholdSecs,
       idleSeconds: this.lastIdleSeconds,
       isIdle: this.isIdle,
       currentActivity: this.currentActivity ? {
         ...this.currentActivity,
+        iconUrl: `/api/icons/${encodeURIComponent(this.currentActivity.appName)}`,
         liveDuration: this.currentActivity.startTime
           ? Math.max(1, Math.round((Date.now() - new Date(this.currentActivity.startTime).getTime()) / 1000))
           : this.currentActivity.duration

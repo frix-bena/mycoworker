@@ -493,7 +493,8 @@ class ActivityStore {
       .map((app, idx) => ({
         ...app,
         rank: idx + 1,
-        percentage: totalDuration > 0 ? Math.round((app.duration / totalDuration) * 100) : 0
+        percentage: totalDuration > 0 ? Math.round((app.duration / totalDuration) * 100) : 0,
+        iconUrl: `/api/icons/${encodeURIComponent(app.name)}`
       }));
 
     // Format IDE breakdown

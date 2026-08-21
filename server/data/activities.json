@@ -1,5 +1,21 @@
 [
   {
+    "id": "b4e1db8d-ba3d-4eee-a76a-385fb84634e9",
+    "title": "Claude",
+    "appName": "Claude",
+    "category": "work",
+    "duration": 10,
+    "startTime": "2026-08-21T17:49:41.751Z",
+    "endTime": "2026-08-21T17:49:52.183Z",
+    "notes": "",
+    "workspace": null,
+    "gitBranch": null,
+    "file": null,
+    "ideName": null,
+    "createdAt": "2026-08-21T17:49:41.752Z",
+    "updatedAt": "2026-08-21T17:49:52.185Z"
+  },
+  {
     "id": "881cad68-5346-4747-b92f-36bebd586a1a",
     "title": "Claude",
     "appName": "Claude",
